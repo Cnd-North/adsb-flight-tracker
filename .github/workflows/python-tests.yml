@@ -1,0 +1,51 @@
+name: Python Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.8, 3.9, '3.10', '3.11']
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Lint with flake8
+      run: |
+        pip install flake8
+        # Stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # Exit-zero treats all errors as warnings
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Test imports
+      run: |
+        python -c "import route_optimizer; print('✓ route_optimizer imports successfully')"
+        python -c "import api_quota_manager; print('✓ api_quota_manager imports successfully')"
+
+    - name: Run route optimizer tests
+      run: |
+        python route_optimizer.py
+
+    - name: Check database setup
+      run: |
+        python setup_database.py
+        ls -lh flight_log.db
+        sqlite3 flight_log.db "SELECT name FROM sqlite_master WHERE type='table';" | head -10
