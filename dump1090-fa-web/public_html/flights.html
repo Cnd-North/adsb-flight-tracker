@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Information - Enhanced ADS-B Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .stats {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .refresh-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #45a049;
+        }
+
+        table {
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9em;
+        }
+
+        td {
+            padding: 12px 15px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .icao {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .callsign {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .country {
+            color: #27ae60;
+        }
+
+        .signal-strong {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .signal-medium {
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .signal-weak {
+            color: #e74c3c;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .link-btn {
+            background: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            text-decoration: none;
+            font-size: 0.85em;
+            margin-right: 5px;
+            display: inline-block;
+        }
+
+        .link-btn:hover {
+            background: #2980b9;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            opacity: 0.8;
+            font-size: 0.9em;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .status.online {
+            background: #27ae60;
+        }
+
+        .status.offline {
+            background: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✈️ Enhanced ADS-B Flight Tracker</h1>
+        <div class="stats">
+            <span id="status" class="status online">● LIVE</span> |
+            <span id="aircraft-count">0</span> Aircraft Tracked |
+            <span id="enriched-count">0</span> Enriched |
+            Last Update: <span id="last-update">--:--:--</span>
+        </div>
+
+        <div class="controls">
+            <div>
+                Auto-refresh: <span id="countdown">10</span>s
+            </div>
+            <button class="refresh-btn" onclick="loadData()">🔄 Refresh Now</button>
+        </div>
+
+        <table id="aircraft-table">
+            <thead>
+                <tr>
+                    <th>ICAO</th>
+                    <th>Callsign</th>
+                    <th>Country</th>
+                    <th>Altitude</th>
+                    <th>Speed</th>
+                    <th>Heading</th>
+                    <th>Messages</th>
+                    <th>Links</th>
+                </tr>
+            </thead>
+            <tbody id="aircraft-tbody">
+                <tr><td colspan="8" class="no-data">Loading aircraft data...</td></tr>
+            </tbody>
+        </table>
+
+        <div class="footer">
+            Data from dump1090 + OpenSky Network API | Updates every 10 seconds
+        </div>
+    </div>
+
+    <script>
+        let countdown = 10;
+        let countdownInterval;
+
+        function formatAltitude(alt) {
+            if (alt === null || alt === undefined) return 'N/A';
+            return parseInt(alt).toLocaleString() + ' ft';
+        }
+
+        function formatSpeed(speed) {
+            if (speed === null || speed === undefined) return 'N/A';
+            return parseInt(speed) + ' kts';
+        }
+
+        function formatHeading(hdg) {
+            if (hdg === null || hdg === undefined) return 'N/A';
+            return parseInt(hdg) + '°';
+        }
+
+        function getSignalClass(messages) {
+            if (messages > 100) return 'signal-strong';
+            if (messages > 30) return 'signal-medium';
+            return 'signal-weak';
+        }
+
+        function loadData() {
+            // Try enriched data first, fall back to regular data
+            fetch('data/aircraft_enriched.json')
+                .then(response => response.json())
+                .then(data => displayData(data, true))
+                .catch(() => {
+                    // Fall back to regular dump1090 data
+                    fetch('data/aircraft.json')
+                        .then(response => response.json())
+                        .then(data => displayData(data, false))
+                        .catch(err => console.error('Error loading data:', err));
+                });
+        }
+
+        function displayData(data, isEnriched) {
+            const tbody = document.getElementById('aircraft-tbody');
+            const aircraft = data.aircraft || [];
+
+            // Update stats
+            document.getElementById('aircraft-count').textContent = aircraft.length;
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+
+            if (isEnriched && data.enrichment_stats) {
+                document.getElementById('enriched-count').textContent = data.enrichment_stats.enriched_aircraft;
+            }
+
+            // Clear table
+            tbody.innerHTML = '';
+
+            if (aircraft.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" class="no-data">No aircraft detected</td></tr>';
+                return;
+            }
+
+            // Sort by messages (signal strength)
+            aircraft.sort((a, b) => (b.messages || 0) - (a.messages || 0));
+
+            // Populate table
+            aircraft.forEach(plane => {
+                const icao = (plane.hex || 'N/A').toUpperCase();
+                const callsign = (plane.flight || '').trim() || 'N/A';
+                const country = plane.country || 'Unknown';
+                const altitude = formatAltitude(plane.altitude);
+                const speed = formatSpeed(plane.speed);
+                const heading = formatHeading(plane.track);
+                const messages = plane.messages || 0;
+                const signalClass = getSignalClass(messages);
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="icao">${icao}</td>
+                    <td class="callsign">${callsign}</td>
+                    <td class="country">${country}</td>
+                    <td>${altitude}</td>
+                    <td>${speed}</td>
+                    <td>${heading}</td>
+                    <td class="${signalClass}">${messages}</td>
+                    <td>
+                        ${callsign !== 'N/A' ?
+                            `<a href="https://flightaware.com/live/flight/${callsign.trim()}" target="_blank" class="link-btn">FA</a>` : ''}
+                        <a href="https://globe.adsbexchange.com/?icao=${icao.toLowerCase()}" target="_blank" class="link-btn">AX</a>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Reset countdown
+            countdown = 10;
+        }
+
+        function startCountdown() {
+            countdownInterval = setInterval(() => {
+                countdown--;
+                document.getElementById('countdown').textContent = countdown;
+
+                if (countdown <= 0) {
+                    loadData();
+                    countdown = 10;
+                }
+            }, 1000);
+        }
+
+        // Initial load
+        loadData();
+        startCountdown();
+    </script>
+</body>
+</html>

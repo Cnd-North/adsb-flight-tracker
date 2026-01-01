@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Statistics - ADS-B Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .controls {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+            margin: 0 5px;
+        }
+
+        .btn:hover {
+            background: #45a049;
+        }
+
+        .btn-secondary {
+            background: #3498db;
+        }
+
+        .btn-secondary:hover {
+            background: #2980b9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .stat-card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .stat-card h3 {
+            color: #764ba2;
+            margin-top: 15px;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .stat-list {
+            list-style: none;
+            color: #333;
+        }
+
+        .stat-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-list li:last-child {
+            border-bottom: none;
+        }
+
+        .count-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .emergency-badge {
+            background: #ff0000;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 0.85em;
+        }
+
+        .chart-container {
+            background: rgba(255,255,255,0.95);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .chart-container h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .bar-chart {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bar-item {
+            display: flex;
+            align-items: center;
+            color: #333;
+        }
+
+        .bar-label {
+            min-width: 150px;
+            font-size: 0.9em;
+        }
+
+        .bar-container {
+            flex: 1;
+            background: #eee;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0 10px;
+        }
+
+        .bar-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            color: white;
+            font-size: 0.85em;
+            font-weight: bold;
+            transition: width 0.5s ease;
+        }
+
+        .record-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 8px;
+            border-radius: 3px;
+        }
+
+        .record-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .record-detail {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+
+        .clickable {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .clickable:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 2% auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 95%;
+            max-width: 1600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .modal-title {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: white;
+        }
+
+        .close-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background 0.3s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .modal-table {
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .modal-table thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-table th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .modal-table td {
+            padding: 10px 12px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9em;
+        }
+
+        .modal-table tr:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .link-btn-small {
+            background: #3498db;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            text-decoration: none;
+            font-size: 0.8em;
+            margin-right: 3px;
+            display: inline-block;
+        }
+
+        .link-btn-small:hover {
+            background: #2980b9;
+        }
+    </style>
+</head>
+<body>
+    <!-- System Status Indicator -->
+    <div id="system_status" style="position: fixed; top: 0; left: 0; right: 0; background: rgba(0,0,0,0.9); color: #fff; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; z-index: 10000; box-shadow: 0 2px 10px rgba(0,0,0,0.3);">
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div id="status_indicator" style="width: 12px; height: 12px; border-radius: 50%; background: #666;"></div>
+                <span id="status_text" style="font-weight: 600;">Connecting...</span>
+            </div>
+            <div>Aircraft: <span id="status_aircraft_count" style="font-weight: 600; color: #4CAF50;">--</span></div>
+            <div>Messages: <span id="status_message_rate" style="font-weight: 600; color: #2196F3;">--</span>/s</div>
+            <div style="font-size: 11px; opacity: 0.8;">Last update: <span id="status_last_update">never</span></div>
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <a href="/index.html" style="color: #fff; text-decoration: none; padding: 4px 12px; background: rgba(255,255,255,0.1); border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">🗺️ Map</a>
+            <a href="/signal-monitor.html" style="color: #fff; text-decoration: none; padding: 4px 12px; background: rgba(255,255,255,0.1); border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">📡 Signal</a>
+            <a href="/log.html" style="color: #fff; text-decoration: none; padding: 4px 12px; background: rgba(255,255,255,0.1); border-radius: 4px; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">📋 Log</a>
+        </div>
+    </div>
+    <div style="height: 50px;"></div>
+    <div class="container">
+        <h1>📊 Flight Statistics & Analytics</h1>
+
+        <div class="controls">
+            <button class="btn btn-secondary" onclick="window.location.href='log.html'">← Back to Log</button>
+            <button class="btn" onclick="loadStats()">🔄 Refresh</button>
+        </div>
+
+        <div id="content" class="loading">Loading statistics...</div>
+    </div>
+
+    <!-- Flight Details Modal -->
+    <div id="flightModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">Flight Details</div>
+                <button class="close-btn" onclick="closeModal()">✕ Close</button>
+            </div>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8081/api';
+        let analyticsData = null;
+        let allFlights = [];
+
+        function loadStats() {
+            Promise.all([
+                fetch(`${API_URL}/analytics`).then(r => r.json()),
+                fetch(`${API_URL}/flights`).then(r => r.json())
+            ])
+            .then(([analytics, flights]) => {
+                analyticsData = analytics;
+                allFlights = flights;
+                displayStats(analytics);
+            })
+            .catch(err => {
+                console.error('Error loading data:', err);
+                showError();
+            });
+        }
+
+        function displayStats(data) {
+            const content = document.getElementById('content');
+
+            let html = '<div class="stats-grid">';
+
+            // Unique Aircraft Card (clickable)
+            html += `
+                <div class="stat-card clickable" onclick="showAllUniqueAircraft()" style="cursor: pointer;">
+                    <h2>✈️ Aircraft Diversity</h2>
+                    <div style="text-align: center; padding: 20px;">
+                        <div style="font-size: 3em; font-weight: bold; color: #667eea;">${data.unique_aircraft}</div>
+                        <div style="color: #666;">Unique Aircraft</div>
+                        <div style="font-size: 0.85em; color: #999; margin-top: 10px;">Click to view all</div>
+                    </div>
+                </div>
+            `;
+
+            // Top Manufacturers
+            html += `
+                <div class="stat-card">
+                    <h2>🏭 Top Manufacturers</h2>
+                    <ul class="stat-list">
+            `;
+            data.top_manufacturers.slice(0, 10).forEach(item => {
+                html += `<li class="clickable" onclick="showFlightsByManufacturer('${escapeHtml(item.manufacturer || 'Unknown')}')">
+                    <span>${item.manufacturer || 'Unknown'}</span>
+                    <span class="count-badge">${item.count}</span>
+                </li>`;
+            });
+            html += '</ul></div>';
+
+            // Top Operators
+            html += `
+                <div class="stat-card">
+                    <h2>🏢 Top Operators</h2>
+                    <ul class="stat-list">
+            `;
+            if (data.top_operators.length > 0) {
+                data.top_operators.slice(0, 10).forEach(item => {
+                    const name = item.operator || item.operator_callsign || 'Unknown';
+                    html += `<li class="clickable" onclick="showFlightsByOperator('${escapeHtml(name)}')">
+                        <span>${name}</span>
+                        <span class="count-badge">${item.count}</span>
+                    </li>`;
+                });
+            } else {
+                html += '<li style="justify-content: center; color: #999;">No operator data yet</li>';
+            }
+            html += '</ul></div>';
+
+            // Emergency Events
+            html += `
+                <div class="stat-card">
+                    <h2>⚠️ Emergency Events</h2>
+            `;
+            if (data.emergencies.length > 0) {
+                html += '<ul class="stat-list">';
+                data.emergencies.forEach(item => {
+                    const date = new Date(item.first_seen).toLocaleString();
+                    const aircraft = item.manufacturer && item.aircraft_model ?
+                        `${item.manufacturer} ${item.aircraft_model}` : 'Unknown';
+                    html += `
+                        <li>
+                            <div>
+                                <div><strong>${item.callsign || item.icao}</strong> <span class="emergency-badge">${item.squawk}</span></div>
+                                <div style="font-size: 0.85em; color: #666;">${aircraft}</div>
+                                <div style="font-size: 0.8em; color: #999;">${date}</div>
+                            </div>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+            } else {
+                html += '<div class="no-data" style="padding: 20px;">No emergencies recorded</div>';
+            }
+            html += '</div>';
+
+            html += '</div>';
+
+            // Top Models Chart
+            html += `
+                <div class="chart-container">
+                    <h2>📐 Most Common Aircraft Models</h2>
+                    <div class="bar-chart">
+            `;
+            const maxModelCount = data.top_models[0]?.count || 1;
+            data.top_models.slice(0, 10).forEach(item => {
+                const percentage = (item.count / maxModelCount) * 100;
+                const label = `${item.manufacturer || ''} ${item.aircraft_model || 'Unknown'}`.trim();
+                html += `
+                    <div class="bar-item clickable" onclick="showFlightsByModel('${escapeHtml(item.aircraft_model || 'Unknown')}', '${escapeHtml(item.manufacturer || '')}')">
+                        <div class="bar-label">${label}</div>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: ${percentage}%">${item.count}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div></div>';
+
+            // Countries Chart
+            html += `
+                <div class="chart-container">
+                    <h2>🌍 Aircraft by Country</h2>
+                    <div class="bar-chart">
+            `;
+            const maxCountryCount = data.countries[0]?.count || 1;
+            data.countries.slice(0, 15).forEach(item => {
+                const percentage = (item.count / maxCountryCount) * 100;
+                html += `
+                    <div class="bar-item clickable" onclick="showFlightsByCountry('${escapeHtml(item.origin_country || 'Unknown')}')">
+                        <div class="bar-label">${item.origin_country || 'Unknown'}</div>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: ${percentage}%">${item.count}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div></div>';
+
+            // Flights by Hour
+            html += `
+                <div class="chart-container">
+                    <h2>⏰ Flights by Hour of Day</h2>
+                    <div class="bar-chart">
+            `;
+            const maxHourCount = Math.max(...data.flights_by_hour.map(h => h.count));
+            for (let i = 0; i < 24; i++) {
+                const hourData = data.flights_by_hour.find(h => h.hour === i);
+                const count = hourData?.count || 0;
+                const percentage = maxHourCount > 0 ? (count / maxHourCount) * 100 : 0;
+                const clickClass = count > 0 ? 'clickable' : '';
+                const onclick = count > 0 ? `onclick="showFlightsByHour(${i})"` : '';
+                html += `
+                    <div class="bar-item ${clickClass}" ${onclick}>
+                        <div class="bar-label">${i.toString().padStart(2, '0')}:00</div>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: ${percentage}%">${count || ''}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            html += '</div></div>';
+
+            // Route Statistics
+            if (data.top_origins.length > 0 || data.top_destinations.length > 0) {
+                html += `
+                    <div class="chart-container">
+                        <h2>🛫 Top Origin Airports</h2>
+                        <div class="bar-chart">
+                `;
+                if (data.top_origins.length > 0) {
+                    const maxOriginCount = data.top_origins[0]?.count || 1;
+                    data.top_origins.forEach(item => {
+                        const percentage = (item.count / maxOriginCount) * 100;
+                        html += `
+                            <div class="bar-item clickable" onclick="showFlightsByOrigin('${escapeHtml(item.origin_airport)}')">
+                                <div class="bar-label">${item.origin_airport}</div>
+                                <div class="bar-container">
+                                    <div class="bar-fill" style="width: ${percentage}%">${item.count}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += '<div class="no-data">No origin data yet - routes will appear as flights are tracked</div>';
+                }
+                html += '</div></div>';
+
+                html += `
+                    <div class="chart-container">
+                        <h2>🛬 Top Destination Airports</h2>
+                        <div class="bar-chart">
+                `;
+                if (data.top_destinations.length > 0) {
+                    const maxDestCount = data.top_destinations[0]?.count || 1;
+                    data.top_destinations.forEach(item => {
+                        const percentage = (item.count / maxDestCount) * 100;
+                        html += `
+                            <div class="bar-item clickable" onclick="showFlightsByDestination('${escapeHtml(item.destination_airport)}')">
+                                <div class="bar-label">${item.destination_airport}</div>
+                                <div class="bar-container">
+                                    <div class="bar-fill" style="width: ${percentage}%">${item.count}</div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                } else {
+                    html += '<div class="no-data">No destination data yet - routes will appear as flights are tracked</div>';
+                }
+                html += '</div></div>';
+            }
+
+            // Most Common Routes
+            if (data.top_routes.length > 0) {
+                html += `
+                    <div class="chart-container">
+                        <h2>🗺️ Most Common Routes</h2>
+                        <div class="bar-chart">
+                `;
+                const maxRouteCount = data.top_routes[0]?.count || 1;
+                data.top_routes.forEach(item => {
+                    const percentage = (item.count / maxRouteCount) * 100;
+                    const routeLabel = `${item.origin_airport} → ${item.destination_airport}`;
+                    html += `
+                        <div class="bar-item clickable" onclick="showFlightsByRoute('${escapeHtml(item.origin_airport)}', '${escapeHtml(item.destination_airport)}')">
+                            <div class="bar-label">${routeLabel}</div>
+                            <div class="bar-container">
+                                <div class="bar-fill" style="width: ${percentage}%">${item.count}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div></div>';
+            }
+
+            // Records Section
+            html += '<div class="stats-grid">';
+
+            // Altitude Records
+            html += `
+                <div class="stat-card">
+                    <h2>🏔️ Altitude Records</h2>
+            `;
+            data.altitude_records.slice(0, 5).forEach((item, idx) => {
+                const aircraft = item.manufacturer && item.aircraft_model ?
+                    `${item.manufacturer} ${item.aircraft_model}` : 'Unknown';
+                html += `
+                    <div class="record-item clickable" onclick="showFlightByIcao('${item.icao}', '${escapeHtml(item.callsign || '')}')">
+                        <div class="record-value">#${idx + 1}: ${item.altitude_max?.toLocaleString()} ft</div>
+                        <div class="record-detail">${item.callsign || item.icao} - ${aircraft}</div>
+                        <div class="record-detail">${item.registration || ''}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            // Speed Records
+            html += `
+                <div class="stat-card">
+                    <h2>⚡ Speed Records</h2>
+            `;
+            data.speed_records.slice(0, 5).forEach((item, idx) => {
+                const aircraft = item.manufacturer && item.aircraft_model ?
+                    `${item.manufacturer} ${item.aircraft_model}` : 'Unknown';
+                html += `
+                    <div class="record-item clickable" onclick="showFlightByIcao('${item.icao}', '${escapeHtml(item.callsign || '')}')">
+                        <div class="record-value">#${idx + 1}: ${item.speed_max} kts</div>
+                        <div class="record-detail">${item.callsign || item.icao} - ${aircraft}</div>
+                        <div class="record-detail">${item.registration || ''}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            // Rare Aircraft (clickable)
+            html += `
+                <div class="stat-card">
+                    <h2>💎 Rare Aircraft (Seen Once)</h2>
+                    <ul class="stat-list">
+            `;
+            if (data.rare_aircraft.length > 0) {
+                data.rare_aircraft.slice(0, 15).forEach(item => {
+                    const name = `${item.manufacturer || ''} ${item.aircraft_model || ''}`.trim() || 'Unknown';
+                    const mfr = escapeHtml(item.manufacturer || '');
+                    const model = escapeHtml(item.aircraft_model || '');
+                    html += `<li class="clickable" onclick="showFlightsByModel('${model}', '${mfr}')">
+                        <span>${name}</span>
+                        <span class="count-badge">1</span>
+                    </li>`;
+                });
+                if (data.rare_aircraft.length > 15) {
+                    html += `<li class="clickable" onclick="showAllRareAircraft()" style="justify-content: center; color: #667eea; font-style: italic; cursor: pointer;">
+                        Click to see all ${data.rare_aircraft.length} rare aircraft
+                    </li>`;
+                }
+            } else {
+                html += '<li style="justify-content: center; color: #999;">No rare aircraft yet</li>';
+            }
+            html += '</ul></div>';
+
+            html += '</div>';
+
+            content.innerHTML = html;
+        }
+
+        function showError() {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="stat-card" style="max-width: 600px; margin: 50px auto;">
+                    <h2>⚠️ Could not load statistics</h2>
+                    <div class="no-data">
+                        <p>Make sure the log API server is running:</p>
+                        <code style="background: #333; color: #0f0; padding: 10px; display: block; margin: 20px 0; border-radius: 5px;">
+                        python3 ~/radioconda/Projects/log_server.py
+                        </code>
+                        <button class="btn" onclick="loadStats()">Try Again</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML.replace(/'/g, "\\'");
+        }
+
+        // Modal functions
+        function closeModal() {
+            document.getElementById('flightModal').style.display = 'none';
+        }
+
+        function showModal(title, flights) {
+            document.getElementById('modalTitle').textContent = title;
+            const modalBody = document.getElementById('modalBody');
+
+            if (flights.length === 0) {
+                modalBody.innerHTML = '<div class="no-data">No flights found</div>';
+            } else {
+                let tableHtml = `
+                    <table class="modal-table">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>ICAO</th>
+                                <th>Callsign</th>
+                                <th>Registration</th>
+                                <th>Aircraft</th>
+                                <th>Operator</th>
+                                <th>Alt</th>
+                                <th>Speed</th>
+                                <th>Sqwk</th>
+                                <th>Links</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                flights.forEach(flight => {
+                    const icao = (flight.icao || 'N/A').toUpperCase();
+                    const callsign = (flight.callsign || '').trim() || 'N/A';
+                    const firstSeen = new Date(flight.first_seen).toLocaleString();
+                    const registration = flight.registration || flight.callsign || 'Unknown';
+                    const manufacturer = flight.manufacturer || '';
+                    const model = flight.aircraft_model || flight.aircraft_type || '';
+                    const year = flight.year_built ? ` (${flight.year_built})` : '';
+                    const aircraft = manufacturer && model ? `${manufacturer} ${model}${year}` : (model || 'Unknown');
+                    const operator = flight.operator || (flight.operator_callsign || '-');
+
+                    let squawkDisplay = flight.squawk || '-';
+                    if (flight.emergency) {
+                        squawkDisplay = `<span style="background: #ff0000; color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold;">${squawkDisplay}</span>`;
+                    }
+
+                    tableHtml += `
+                        <tr>
+                            <td>${firstSeen}</td>
+                            <td style="font-family: monospace; font-weight: bold; color: #667eea;">${icao}</td>
+                            <td style="font-weight: 600;">${callsign}</td>
+                            <td>${registration}</td>
+                            <td style="font-size: 0.85em;">${aircraft}</td>
+                            <td style="font-size: 0.85em;">${operator}</td>
+                            <td>${(flight.altitude_max || 0).toLocaleString()} ft</td>
+                            <td>${flight.speed_max || 0} kts</td>
+                            <td>${squawkDisplay}</td>
+                            <td style="white-space: nowrap;">
+                                ${callsign !== 'N/A' ?
+                                    `<a href="https://flightaware.com/live/flight/${callsign}" target="_blank" class="link-btn-small">FA</a>` : ''}
+                                <a href="https://globe.adsbexchange.com/?icao=${icao.toLowerCase()}" target="_blank" class="link-btn-small">AX</a>
+                                ${registration !== 'Unknown' && registration !== callsign ?
+                                    `<a href="https://flightaware.com/resources/registration/${registration}" target="_blank" class="link-btn-small">Reg</a>` : ''}
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tableHtml += '</tbody></table>';
+                modalBody.innerHTML = tableHtml;
+            }
+
+            document.getElementById('flightModal').style.display = 'block';
+        }
+
+        // Filter functions
+        function showFlightsByManufacturer(manufacturer) {
+            const filtered = allFlights.filter(f =>
+                (f.manufacturer || 'Unknown') === manufacturer
+            );
+            showModal(`🏭 ${manufacturer} Aircraft (${filtered.length} flights)`, filtered);
+        }
+
+        function showFlightsByModel(model, manufacturer) {
+            const filtered = allFlights.filter(f =>
+                (f.aircraft_model || 'Unknown') === model &&
+                (f.manufacturer || '') === manufacturer
+            );
+            const label = `${manufacturer} ${model}`.trim();
+            showModal(`📐 ${label} (${filtered.length} flights)`, filtered);
+        }
+
+        function showFlightsByOperator(operator) {
+            const filtered = allFlights.filter(f =>
+                (f.operator || f.operator_callsign || 'Unknown') === operator
+            );
+            showModal(`🏢 ${operator} Flights (${filtered.length})`, filtered);
+        }
+
+        function showFlightsByCountry(country) {
+            const filtered = allFlights.filter(f =>
+                (f.origin_country || 'Unknown') === country
+            );
+            showModal(`🌍 ${country} Aircraft (${filtered.length} flights)`, filtered);
+        }
+
+        function showFlightsByHour(hour) {
+            const filtered = allFlights.filter(f => {
+                const date = new Date(f.first_seen);
+                return date.getHours() === hour;
+            });
+            const hourStr = hour.toString().padStart(2, '0');
+            showModal(`⏰ Flights at ${hourStr}:00 (${filtered.length})`, filtered);
+        }
+
+        function showFlightByIcao(icao, callsign) {
+            const filtered = allFlights.filter(f =>
+                f.icao === icao && (f.callsign || '') === callsign
+            );
+            const title = callsign ? `${callsign} (${icao})` : icao;
+            showModal(`✈️ Flight ${title}`, filtered);
+        }
+
+        function showFlightsByOrigin(airport) {
+            const filtered = allFlights.filter(f =>
+                (f.origin_airport || '') === airport
+            );
+            showModal(`🛫 Departures from ${airport} (${filtered.length} flights)`, filtered);
+        }
+
+        function showFlightsByDestination(airport) {
+            const filtered = allFlights.filter(f =>
+                (f.destination_airport || '') === airport
+            );
+            showModal(`🛬 Arrivals to ${airport} (${filtered.length} flights)`, filtered);
+        }
+
+        function showFlightsByRoute(origin, destination) {
+            const filtered = allFlights.filter(f =>
+                (f.origin_airport || '') === origin &&
+                (f.destination_airport || '') === destination
+            );
+            showModal(`🗺️ Route ${origin} → ${destination} (${filtered.length} flights)`, filtered);
+        }
+
+        function showAllUniqueAircraft() {
+            // Group flights by unique manufacturer + model combination
+            const uniqueAircraft = new Map();
+
+            allFlights.forEach(f => {
+                const key = `${f.manufacturer || 'Unknown'}|${f.aircraft_model || 'Unknown'}`;
+                if (!uniqueAircraft.has(key)) {
+                    uniqueAircraft.set(key, {
+                        manufacturer: f.manufacturer || 'Unknown',
+                        model: f.aircraft_model || 'Unknown',
+                        flights: []
+                    });
+                }
+                uniqueAircraft.get(key).flights.push(f);
+            });
+
+            // Create a custom view showing each unique aircraft type
+            const modalTitle = `✈️ All ${uniqueAircraft.size} Unique Aircraft`;
+            const modalBody = document.getElementById('modalBody');
+
+            let html = '<div style="max-height: 500px; overflow-y: auto;"><ul class="stat-list" style="list-style: none; padding: 0;">';
+
+            // Sort by manufacturer then model
+            const sorted = Array.from(uniqueAircraft.values()).sort((a, b) => {
+                const mfrCompare = a.manufacturer.localeCompare(b.manufacturer);
+                return mfrCompare !== 0 ? mfrCompare : a.model.localeCompare(b.model);
+            });
+
+            sorted.forEach(aircraft => {
+                const name = `${aircraft.manufacturer} ${aircraft.model}`.trim();
+                const count = aircraft.flights.length;
+                html += `
+                    <li class="clickable" onclick="showFlightsByModel('${escapeHtml(aircraft.model)}', '${escapeHtml(aircraft.manufacturer)}')"
+                        style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; cursor: pointer;">
+                        <span>${name}</span>
+                        <span class="count-badge" style="background: #667eea; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.85em;">${count}</span>
+                    </li>
+                `;
+            });
+
+            html += '</ul></div>';
+
+            document.getElementById('modalTitle').textContent = modalTitle;
+            modalBody.innerHTML = html;
+            document.getElementById('flightModal').style.display = 'block';
+        }
+
+        function showAllRareAircraft() {
+            // Get all rare aircraft (seen only once)
+            const aircraftCount = new Map();
+
+            allFlights.forEach(f => {
+                const key = `${f.manufacturer || 'Unknown'}|${f.aircraft_model || 'Unknown'}`;
+                aircraftCount.set(key, (aircraftCount.get(key) || 0) + 1);
+            });
+
+            const rareFlights = allFlights.filter(f => {
+                const key = `${f.manufacturer || 'Unknown'}|${f.aircraft_model || 'Unknown'}`;
+                return aircraftCount.get(key) === 1;
+            });
+
+            // Sort by manufacturer then model
+            rareFlights.sort((a, b) => {
+                const mfrA = a.manufacturer || 'Unknown';
+                const mfrB = b.manufacturer || 'Unknown';
+                const mfrCompare = mfrA.localeCompare(mfrB);
+                return mfrCompare !== 0 ? mfrCompare : (a.aircraft_model || '').localeCompare(b.aircraft_model || '');
+            });
+
+            showModal(`💎 All ${rareFlights.length} Rare Aircraft (Seen Once)`, rareFlights);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('flightModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+
+        // Initial load
+        loadStats();
+
+        // Auto-refresh every 60 seconds
+        setInterval(loadStats, 60000);
+    </script>
+</body>
+</html>

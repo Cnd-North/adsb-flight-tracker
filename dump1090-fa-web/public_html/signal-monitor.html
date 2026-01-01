@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADS-B Signal Quality Monitor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.2s;
+        }
+
+        .status-card:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .status-card .label {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+
+        .status-card .value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .status-card .unit {
+            font-size: 0.7em;
+            opacity: 0.7;
+            margin-left: 5px;
+        }
+
+        .chart-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .chart-title {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .waterfall-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        #waterfallCanvas {
+            width: 100%;
+            height: 200px;
+            background: #000;
+            border-radius: 8px;
+            image-rendering: pixelated;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            opacity: 0.7;
+            font-size: 0.9em;
+        }
+
+        .alert {
+            background: rgba(255, 87, 34, 0.2);
+            border-left: 4px solid #ff5722;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert.success {
+            background: rgba(76, 175, 80, 0.2);
+            border-left-color: #4caf50;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            .status-bar {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📡 ADS-B Signal Quality Monitor</h1>
+        <div class="subtitle">Real-time signal analysis and diagnostics</div>
+        <div style="margin-top: 15px; display: flex; gap: 15px; justify-content: center;">
+            <a href="/index.html" style="color: #fff; text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.15); border-radius: 6px; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.2);" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">🗺️ Live Map</a>
+            <a href="/stats.html" style="color: #fff; text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.15); border-radius: 6px; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.2);" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">📊 Statistics</a>
+            <a href="/log.html" style="color: #fff; text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.15); border-radius: 6px; transition: all 0.2s; border: 1px solid rgba(255,255,255,0.2);" onmouseover="this.style.background='rgba(255,255,255,0.25)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">📋 Flight Log</a>
+        </div>
+    </div>
+
+    <div id="alert-container"></div>
+
+    <div class="status-bar">
+        <div class="status-card">
+            <div class="label">Aircraft Tracked</div>
+            <div class="value" id="aircraft-count">--</div>
+        </div>
+        <div class="status-card">
+            <div class="label">Messages/Second</div>
+            <div class="value" id="message-rate">--</div>
+        </div>
+        <div class="status-card">
+            <div class="label">Positions/Second</div>
+            <div class="value" id="position-rate">--</div>
+        </div>
+        <div class="status-card">
+            <div class="label">Signal Strength</div>
+            <div class="value" id="signal-strength">--<span class="unit">dBFS</span></div>
+        </div>
+        <div class="status-card">
+            <div class="label">Signal Quality</div>
+            <div class="value" id="signal-quality">--<span class="unit">%</span></div>
+        </div>
+    </div>
+
+    <div class="waterfall-container">
+        <div class="chart-title">📊 Signal Strength Waterfall - 1090 MHz ADS-B</div>
+        <div style="display: flex; gap: 20px; align-items: flex-start;">
+            <div style="flex: 1;">
+                <canvas id="waterfallCanvas"></canvas>
+                <div id="frequencyAxis" style="display: flex; justify-content: space-between; font-size: 11px; margin-top: 5px; padding: 0 10px; opacity: 0.8;">
+                    <span>1089.5 MHz</span>
+                    <span>1089.7 MHz</span>
+                    <span style="font-weight: bold; color: #4CAF50;">1090.0 MHz</span>
+                    <span>1090.3 MHz</span>
+                    <span>1090.5 MHz</span>
+                </div>
+            </div>
+            <div style="width: 80px; font-size: 11px;">
+                <div style="font-weight: 600; margin-bottom: 10px; text-align: center;">Signal (dBFS)</div>
+                <div id="dbScale" style="display: flex; flex-direction: column; gap: 2px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-title">✈️ Aircraft Tracked Over Time</div>
+        <div class="chart-wrapper">
+            <canvas id="aircraftChart"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-title">📨 Message Rate Over Time</div>
+        <div class="chart-wrapper">
+            <canvas id="messageChart"></canvas>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <div class="chart-title">📍 Position Updates Over Time</div>
+        <div class="chart-wrapper">
+            <canvas id="positionChart"></canvas>
+        </div>
+    </div>
+
+    <div class="footer">
+        Signal monitoring updates every 1 second • Data retention: 5 minutes
+    </div>
+
+    <script>
+        const MAX_POINTS = 300; // 5 minutes at 1 second intervals
+        const WATERFALL_ROWS = 100;
+
+        // Data storage
+        const timeLabels = [];
+        const aircraftData = [];
+        const messageData = [];
+        const positionData = [];
+        const signalData = [];
+
+        // Waterfall data
+        const waterfallData = [];
+        for (let i = 0; i < WATERFALL_ROWS; i++) {
+            waterfallData.push(new Array(100).fill(-40)); // Initialize with -40 dBFS
+        }
+
+        // Chart configuration
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                x: {
+                    display: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        maxTicksLimit: 10
+                    }
+                },
+                y: {
+                    display: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: 'rgba(255, 255, 255, 0.7)'
+                    }
+                }
+            }
+        };
+
+        // Create charts
+        const aircraftChart = new Chart(document.getElementById('aircraftChart'), {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [{
+                    label: 'Aircraft',
+                    data: aircraftData,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: chartOptions
+        });
+
+        const messageChart = new Chart(document.getElementById('messageChart'), {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [{
+                    label: 'Messages/sec',
+                    data: messageData,
+                    borderColor: 'rgb(255, 159, 64)',
+                    backgroundColor: 'rgba(255, 159, 64, 0.2)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: chartOptions
+        });
+
+        const positionChart = new Chart(document.getElementById('positionChart'), {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [{
+                    label: 'Positions/sec',
+                    data: positionData,
+                    borderColor: 'rgb(153, 102, 255)',
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: chartOptions
+        });
+
+        // Waterfall canvas
+        const waterfallCanvas = document.getElementById('waterfallCanvas');
+        const waterfallCtx = waterfallCanvas.getContext('2d');
+
+        function resizeWaterfallCanvas() {
+            const rect = waterfallCanvas.getBoundingClientRect();
+            waterfallCanvas.width = rect.width;
+            waterfallCanvas.height = 200;
+        }
+        resizeWaterfallCanvas();
+        window.addEventListener('resize', resizeWaterfallCanvas);
+
+        // Enhanced color mapping for waterfall (signal strength to color)
+        // Uses smooth gradient: Black → Blue → Cyan → Green → Yellow → Orange → Red
+        function signalToColor(dbfs) {
+            // dbfs typically ranges from -50 (weak) to 0 (strong)
+            // Clamp to realistic range for ADS-B signals
+            const clamped = Math.max(-50, Math.min(0, dbfs));
+            const normalized = (clamped + 50) / 50; // 0 to 1
+
+            let r, g, b;
+
+            if (normalized < 0.15) {
+                // Very weak: black to dark blue (-50 to -42.5 dBFS)
+                const t = normalized / 0.15;
+                r = 0;
+                g = 0;
+                b = Math.floor(t * 128);
+            } else if (normalized < 0.3) {
+                // Weak: dark blue to cyan (-42.5 to -35 dBFS)
+                const t = (normalized - 0.15) / 0.15;
+                r = 0;
+                g = Math.floor(t * 255);
+                b = 128 + Math.floor(t * 127);
+            } else if (normalized < 0.5) {
+                // Medium: cyan to green (-35 to -25 dBFS)
+                const t = (normalized - 0.3) / 0.2;
+                r = 0;
+                g = 255;
+                b = Math.floor((1 - t) * 255);
+            } else if (normalized < 0.7) {
+                // Good: green to yellow (-25 to -15 dBFS)
+                const t = (normalized - 0.5) / 0.2;
+                r = Math.floor(t * 255);
+                g = 255;
+                b = 0;
+            } else if (normalized < 0.85) {
+                // Strong: yellow to orange (-15 to -7.5 dBFS)
+                const t = (normalized - 0.7) / 0.15;
+                r = 255;
+                g = Math.floor((1 - t * 0.5) * 255);
+                b = 0;
+            } else {
+                // Very strong: orange to red (-7.5 to 0 dBFS)
+                const t = (normalized - 0.85) / 0.15;
+                r = 255;
+                g = Math.floor((1 - t) * 128);
+                b = 0;
+            }
+
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // Create dB scale legend
+        function createDbScale() {
+            const scaleDiv = document.getElementById('dbScale');
+            const steps = [
+                { db: 0, label: '0 dB' },
+                { db: -10, label: '-10 dB' },
+                { db: -20, label: '-20 dB' },
+                { db: -30, label: '-30 dB' },
+                { db: -40, label: '-40 dB' },
+                { db: -50, label: '-50 dB' }
+            ];
+
+            steps.forEach(step => {
+                const color = signalToColor(step.db);
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.gap = '8px';
+                item.style.marginBottom = '4px';
+                item.innerHTML = `
+                    <div style="width: 30px; height: 16px; background: ${color}; border: 1px solid rgba(255,255,255,0.3); border-radius: 3px;"></div>
+                    <span style="opacity: 0.9;">${step.label}</span>
+                `;
+                scaleDiv.appendChild(item);
+            });
+        }
+
+        function drawWaterfall() {
+            const width = waterfallCanvas.width;
+            const height = waterfallCanvas.height;
+            const rowHeight = height / WATERFALL_ROWS;
+
+            waterfallCtx.clearRect(0, 0, width, height);
+
+            for (let row = 0; row < WATERFALL_ROWS; row++) {
+                const rowData = waterfallData[row];
+                const colWidth = width / rowData.length;
+
+                for (let col = 0; col < rowData.length; col++) {
+                    waterfallCtx.fillStyle = signalToColor(rowData[col]);
+                    waterfallCtx.fillRect(col * colWidth, row * rowHeight, colWidth + 1, rowHeight + 1);
+                }
+            }
+        }
+
+        function updateWaterfall(avgSignal) {
+            // Shift all rows down
+            waterfallData.pop();
+
+            // Create new row with signal variation
+            const newRow = [];
+            for (let i = 0; i < 100; i++) {
+                // Add some variation to simulate frequency spectrum
+                const variation = (Math.random() - 0.5) * 10;
+                newRow.push(avgSignal + variation);
+            }
+
+            waterfallData.unshift(newRow);
+            drawWaterfall();
+        }
+
+        function showAlert(message, type = 'alert') {
+            const container = document.getElementById('alert-container');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${type}`;
+            alertDiv.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(alertDiv);
+
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        async function fetchData() {
+            try {
+                const response = await fetch('http://localhost:8080/data/aircraft.json');
+                const data = await response.json();
+
+                // Extract metrics
+                const aircraftCount = data.aircraft ? data.aircraft.length : 0;
+                const messages = data.messages || 0;
+
+                // Calculate message rate (messages since last update)
+                const messageRate = messages - (window.lastMessages || 0);
+                window.lastMessages = messages;
+
+                // Count position updates
+                const positionCount = data.aircraft ?
+                    data.aircraft.filter(a => a.seen_pos !== undefined && a.seen_pos < 2).length : 0;
+
+                // Calculate average signal strength (RSSI)
+                let avgSignal = -40;
+                let signalCount = 0;
+                if (data.aircraft) {
+                    data.aircraft.forEach(a => {
+                        if (a.rssi !== undefined) {
+                            avgSignal += a.rssi;
+                            signalCount++;
+                        }
+                    });
+                    if (signalCount > 0) {
+                        avgSignal = avgSignal / signalCount;
+                    }
+                }
+
+                // Calculate signal quality (percentage of aircraft with good signal)
+                const goodSignalCount = data.aircraft ?
+                    data.aircraft.filter(a => a.rssi && a.rssi > -20).length : 0;
+                const signalQuality = aircraftCount > 0 ?
+                    Math.round((goodSignalCount / aircraftCount) * 100) : 0;
+
+                // Update status cards
+                document.getElementById('aircraft-count').textContent = aircraftCount;
+                document.getElementById('message-rate').textContent = Math.max(0, messageRate);
+                document.getElementById('position-rate').textContent = positionCount;
+                document.getElementById('signal-strength').innerHTML =
+                    `${avgSignal.toFixed(1)}<span class="unit">dBFS</span>`;
+                document.getElementById('signal-quality').innerHTML =
+                    `${signalQuality}<span class="unit">%</span>`;
+
+                // Add data to charts
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString();
+
+                timeLabels.push(timeStr);
+                aircraftData.push(aircraftCount);
+                messageData.push(Math.max(0, messageRate));
+                positionData.push(positionCount);
+                signalData.push(avgSignal);
+
+                // Limit data points
+                if (timeLabels.length > MAX_POINTS) {
+                    timeLabels.shift();
+                    aircraftData.shift();
+                    messageData.shift();
+                    positionData.shift();
+                    signalData.shift();
+                }
+
+                // Update charts
+                aircraftChart.update('none');
+                messageChart.update('none');
+                positionChart.update('none');
+
+                // Update waterfall
+                updateWaterfall(avgSignal);
+
+                // Check for signal issues
+                if (aircraftCount === 0 && messageRate === 0) {
+                    showAlert('⚠️ No signal detected! Check antenna connection and dump1090 process.');
+                } else if (aircraftCount < 2 && messageRate < 10) {
+                    showAlert('⚠️ Weak signal detected. Signal quality may be degraded.');
+                }
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                showAlert('❌ Failed to fetch data from dump1090. Is it running?');
+            }
+        }
+
+        // Initial fetch and set interval
+        fetchData();
+        setInterval(fetchData, 1000);
+
+        // Initial waterfall draw and dB scale
+        drawWaterfall();
+        createDbScale();
+    </script>
+<script src="status_indicator.js?v=2"></script>
+<!-- Coverage Analysis Section -->
+<div class="coverage-section" style="margin-top: 30px;">
+    <h2 style="text-align: center; margin-bottom: 20px;">📡 Antenna Coverage Analysis</h2>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+        <!-- Left Column: Antenna Info -->
+        <div>
+            <div class="status-card">
+                <h3>Antenna Location</h3>
+                <table style="width: 100%; margin-top: 15px;">
+                    <tr>
+                        <td><strong>Latitude:</strong></td>
+                        <td id="antenna-lat">Calculating...</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Longitude:</strong></td>
+                        <td id="antenna-lon">Calculating...</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Est. Height:</strong></td>
+                        <td>
+                            <span id="antenna-height-ft">-</span> ft
+                            (<span id="antenna-height-m">-</span> m)
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>Confidence:</strong></td>
+                        <td><span id="antenna-confidence" class="confidence-badge">-</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Samples:</strong></td>
+                        <td id="antenna-samples">-</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="status-card" style="margin-top: 20px;">
+                <h3>Coverage by Direction</h3>
+                <table style="width: 100%; margin-top: 15px; font-size: 0.9em;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center;">Direction</th>
+                            <th style="text-align: center;">Count</th>
+                            <th style="text-align: center;">Range</th>
+                            <th style="text-align: center;">Signal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coverage-table-body">
+                        <tr><td colspan="4" style="text-align: center;">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right Column: Polar Chart -->
+        <div>
+            <div class="status-card" style="height: 700px; padding: 20px;">
+                <canvas id="coverage-polar-chart" width="600" height="600"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .confidence-badge {
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-weight: bold;
+        font-size: 0.9em;
+    }
+    .confidence-high {
+        background: rgba(74, 222, 128, 0.3);
+        color: #4ade80;
+    }
+    .confidence-medium {
+        background: rgba(251, 191, 36, 0.3);
+        color: #fbbf24;
+    }
+    .confidence-low {
+        background: rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+    }
+</style>
+<script src="coverage_viz.js?v=10"></script>
+</body>
+</html>

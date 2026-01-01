@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Coverage API Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1e3c72;
+            color: white;
+        }
+        .test-section {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        pre {
+            background: #000;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        canvas {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Coverage Analysis Test Page</h1>
+
+    <div class="test-section">
+        <h2>1. API Response Test</h2>
+        <button onclick="testAPI()">Test Coverage API</button>
+        <pre id="api-result">Click button to test...</pre>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Antenna Location</h2>
+        <div id="antenna-info">Loading...</div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Coverage Polar Chart</h2>
+        <canvas id="test-chart" width="400" height="400"></canvas>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Files Check</h2>
+        <div id="files-check">
+            <p>Checking files...</p>
+        </div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            try {
+                const response = await fetch('http://localhost:8081/api/coverage');
+                const data = await response.json();
+                document.getElementById('api-result').textContent = JSON.stringify(data, null, 2);
+
+                // Display antenna info
+                if (data.antenna) {
+                    document.getElementById('antenna-info').innerHTML = `
+                        <p><strong>Latitude:</strong> ${data.antenna.latitude}°</p>
+                        <p><strong>Longitude:</strong> ${data.antenna.longitude}°</p>
+                        <p><strong>Height:</strong> ${data.antenna.height_feet} ft (${data.antenna.height_meters} m)</p>
+                        <p><strong>Confidence:</strong> ${data.antenna.confidence.toUpperCase()}</p>
+                        <p><strong>Samples:</strong> ${data.antenna.samples}</p>
+                    `;
+
+                    // Create chart
+                    createChart(data);
+                }
+            } catch (error) {
+                document.getElementById('api-result').textContent = 'ERROR: ' + error.message;
+            }
+        }
+
+        function createChart(data) {
+            const canvas = document.getElementById('test-chart');
+            const ctx = canvas.getContext('2d');
+
+            const directions = data.coverage_by_direction;
+            const labels = directions.map(d => d.direction);
+            const distances = directions.map(d => d.max_distance);
+
+            new Chart(ctx, {
+                type: 'polarArea',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Max Range (km)',
+                        data: distances,
+                        backgroundColor: distances.map(d =>
+                            d > 20 ? 'rgba(74, 222, 128, 0.6)' :
+                            d > 10 ? 'rgba(251, 191, 36, 0.6)' :
+                            d > 0 ? 'rgba(239, 68, 68, 0.6)' :
+                            'rgba(100, 100, 100, 0.3)'
+                        )
+                    }]
+                },
+                options: {
+                    responsive: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Coverage Pattern Test',
+                            color: '#000'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Check if files exist
+        async function checkFiles() {
+            const files = [
+                'coverage_viz.js',
+                'antenna_marker.js',
+                'status_indicator.js'
+            ];
+
+            const results = [];
+            for (const file of files) {
+                try {
+                    const response = await fetch(file);
+                    results.push(`✅ ${file} - ${response.status} ${response.statusText}`);
+                } catch (error) {
+                    results.push(`❌ ${file} - ${error.message}`);
+                }
+            }
+
+            document.getElementById('files-check').innerHTML = results.map(r => `<p>${r}</p>`).join('');
+        }
+
+        // Auto-run tests
+        window.onload = function() {
+            testAPI();
+            checkFiles();
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Log - ADS-B Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            text-transform: uppercase;
+        }
+
+        .controls {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .advanced-filters {
+            background: rgba(255,255,255,0.05);
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .advanced-filters.show {
+            display: block;
+        }
+
+        .filter-section {
+            margin-bottom: 20px;
+        }
+
+        .filter-section h3 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #fff;
+            border-bottom: 2px solid rgba(255,255,255,0.3);
+            padding-bottom: 5px;
+        }
+
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .filter-item label {
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        select, input {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: none;
+            background: rgba(255,255,255,0.9);
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        input[type="date"], input[type="number"] {
+            width: 100%;
+        }
+
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+
+        .btn:hover {
+            background: #45a049;
+        }
+
+        .btn-secondary {
+            background: #3498db;
+        }
+
+        .btn-secondary:hover {
+            background: #2980b9;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+        }
+
+        .btn-warning:hover {
+            background: #e67e22;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.9em;
+        }
+
+        .toggle-filters-btn {
+            background: rgba(255,255,255,0.2);
+            margin-bottom: 10px;
+            width: 100%;
+        }
+
+        .toggle-filters-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        table {
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        thead {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        td {
+            padding: 12px 15px;
+            color: #333;
+            border-bottom: 1px solid #eee;
+        }
+
+        tr:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .icao {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .callsign {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .time {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .link-btn {
+            background: #3498db;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 3px;
+            text-decoration: none;
+            font-size: 0.85em;
+            margin-right: 5px;
+            display: inline-block;
+        }
+
+        .link-btn:hover {
+            background: #2980b9;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .note {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        .active-filters {
+            background: rgba(76, 175, 80, 0.2);
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+
+        .filter-tag {
+            display: inline-block;
+            background: rgba(255,255,255,0.3);
+            padding: 4px 10px;
+            border-radius: 3px;
+            margin: 2px;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Flight Log Database</h1>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Flights</div>
+                <div class="stat-value" id="total-flights">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Filtered / Showing</div>
+                <div class="stat-value" id="showing-flights">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Countries</div>
+                <div class="stat-value" id="countries-count">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Max Altitude</div>
+                <div class="stat-value" id="max-altitude">0</div>
+                <div class="stat-label">feet</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn toggle-filters-btn" onclick="toggleAdvancedFilters()">
+                🔍 Advanced Filters <span id="filter-toggle-icon">▼</span>
+            </button>
+
+            <div class="advanced-filters" id="advanced-filters">
+                <!-- Date Filters -->
+                <div class="filter-section">
+                    <h3>📅 Date & Time Filters</h3>
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label>Quick Select</label>
+                            <select id="date-quick-filter">
+                                <option value="">Custom Range</option>
+                                <option value="today">Today</option>
+                                <option value="yesterday">Yesterday</option>
+                                <option value="week">Last 7 Days</option>
+                                <option value="month">Last 30 Days</option>
+                                <option value="all" selected>All Time</option>
+                            </select>
+                        </div>
+                        <div class="filter-item">
+                            <label>From Date</label>
+                            <input type="date" id="date-from">
+                        </div>
+                        <div class="filter-item">
+                            <label>To Date</label>
+                            <input type="date" id="date-to">
+                        </div>
+                        <div class="filter-item">
+                            <label>Time Range</label>
+                            <select id="time-filter">
+                                <option value="">All Day</option>
+                                <option value="morning">Morning (06:00-12:00)</option>
+                                <option value="afternoon">Afternoon (12:00-18:00)</option>
+                                <option value="evening">Evening (18:00-00:00)</option>
+                                <option value="night">Night (00:00-06:00)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Text Search Filters -->
+                <div class="filter-section">
+                    <h3>🔤 Text Search</h3>
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label>ICAO / Callsign</label>
+                            <input type="text" id="search-icao" placeholder="e.g., AAL123, A1B2C3">
+                        </div>
+                        <div class="filter-item">
+                            <label>Registration</label>
+                            <input type="text" id="search-reg" placeholder="e.g., N12345, C-GABC">
+                        </div>
+                        <div class="filter-item">
+                            <label>Operator</label>
+                            <input type="text" id="search-operator" placeholder="e.g., American Airlines">
+                        </div>
+                        <div class="filter-item">
+                            <label>Aircraft Type</label>
+                            <input type="text" id="search-aircraft" placeholder="e.g., Boeing 737">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Numeric Range Filters -->
+                <div class="filter-section">
+                    <h3>📊 Numeric Ranges</h3>
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label>Altitude (ft)</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                                <input type="number" id="alt-min" placeholder="Min" step="1000">
+                                <input type="number" id="alt-max" placeholder="Max" step="1000">
+                            </div>
+                        </div>
+                        <div class="filter-item">
+                            <label>Speed (kts)</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                                <input type="number" id="speed-min" placeholder="Min" step="50">
+                                <input type="number" id="speed-max" placeholder="Max" step="50">
+                            </div>
+                        </div>
+                        <div class="filter-item">
+                            <label>Vertical Speed (ft/min)</label>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                                <input type="number" id="vs-min" placeholder="Min" step="100">
+                                <input type="number" id="vs-max" placeholder="Max" step="100">
+                            </div>
+                        </div>
+                        <div class="filter-item">
+                            <label>Squawk Code</label>
+                            <input type="text" id="search-squawk" placeholder="e.g., 7700, 7600">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Filter Actions -->
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 15px;">
+                    <button class="btn" onclick="applyFilters()">✓ Apply Filters</button>
+                    <button class="btn btn-warning" onclick="clearFilters()">✗ Clear All</button>
+                </div>
+
+                <!-- Active Filters Display -->
+                <div id="active-filters" class="active-filters" style="display: none;">
+                    <strong>Active Filters:</strong> <span id="filter-tags"></span>
+                </div>
+            </div>
+
+            <div class="controls-row" style="margin-top: 10px;">
+                <div class="filter-group">
+                    <input type="text" id="quick-search" placeholder="Quick search..." style="min-width: 250px;">
+                </div>
+                <div class="filter-group">
+                    <button class="btn btn-secondary" onclick="window.location.href='stats.html'">📊 Statistics</button>
+                    <button class="btn btn-secondary" onclick="exportCSV()">📥 Export CSV</button>
+                    <button class="btn" onclick="loadLog()">🔄 Refresh</button>
+                </div>
+            </div>
+        </div>
+
+        <table id="log-table">
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Date/Time <span id="sort-0">▼</span></th>
+                    <th onclick="sortTable(1)">ICAO <span id="sort-1"></span></th>
+                    <th onclick="sortTable(2)">Call <span id="sort-2"></span></th>
+                    <th onclick="sortTable(3)">Reg <span id="sort-3"></span></th>
+                    <th onclick="sortTable(4)">Aircraft <span id="sort-4"></span></th>
+                    <th onclick="sortTable(5)">Operator <span id="sort-5"></span></th>
+                    <th onclick="sortTable(6)">Route <span id="sort-6"></span></th>
+                    <th onclick="sortTable(7)">Alt <span id="sort-7"></span></th>
+                    <th onclick="sortTable(8)">V/S <span id="sort-8"></span></th>
+                    <th onclick="sortTable(9)">Speed <span id="sort-9"></span></th>
+                    <th onclick="sortTable(10)">Sqwk <span id="sort-10"></span></th>
+                    <th>Links</th>
+                </tr>
+            </thead>
+            <tbody id="log-tbody">
+                <tr><td colspan="12" class="no-data">Loading flight log...</td></tr>
+            </tbody>
+        </table>
+
+        <div class="note">
+            💡 <strong>Note:</strong> Routes are captured for <strong>new flights</strong> with callsigns using live APIs.
+            Historical flights show "-" for routes. Set up Aviation Stack API key for better route coverage!
+            <br><br>
+            See <code>~/radioconda/Projects/ROUTE_SETUP_GUIDE.md</code> for setup instructions.
+        </div>
+    </div>
+
+    <script>
+        let allFlights = [];
+        let filteredFlights = [];
+        let currentSort = { column: 0, ascending: false };
+        const API_URL = 'http://localhost:8081/api';
+
+        function loadLog() {
+            Promise.all([
+                fetch(`${API_URL}/flights`).then(r => r.json()),
+                fetch(`${API_URL}/stats`).then(r => r.json())
+            ])
+            .then(([flights, stats]) => {
+                allFlights = flights;
+                applyFilters();
+                displayStats(stats);
+            })
+            .catch(err => {
+                console.error('Error loading data:', err);
+                showError();
+            });
+        }
+
+        function displayStats(stats) {
+            document.getElementById('total-flights').textContent = stats.total_flights;
+            document.getElementById('countries-count').textContent = stats.countries_count;
+            document.getElementById('max-altitude').textContent = (stats.max_altitude || 0).toLocaleString();
+        }
+
+        function toggleAdvancedFilters() {
+            const panel = document.getElementById('advanced-filters');
+            const icon = document.getElementById('filter-toggle-icon');
+            panel.classList.toggle('show');
+            icon.textContent = panel.classList.contains('show') ? '▲' : '▼';
+        }
+
+        function applyFilters() {
+            let filtered = [...allFlights];
+
+            // Date filters
+            const quickDate = document.getElementById('date-quick-filter').value;
+            const dateFrom = document.getElementById('date-from').value;
+            const dateTo = document.getElementById('date-to').value;
+            const timeRange = document.getElementById('time-filter').value;
+
+            if (quickDate && quickDate !== 'all') {
+                const now = new Date();
+                let cutoff;
+
+                switch(quickDate) {
+                    case 'today':
+                        cutoff = new Date(now.setHours(0, 0, 0, 0));
+                        break;
+                    case 'yesterday':
+                        cutoff = new Date(now.setHours(0, 0, 0, 0));
+                        cutoff.setDate(cutoff.getDate() - 1);
+                        break;
+                    case 'week':
+                        cutoff = new Date(now.setHours(0, 0, 0, 0));
+                        cutoff.setDate(cutoff.getDate() - 7);
+                        break;
+                    case 'month':
+                        cutoff = new Date(now.setHours(0, 0, 0, 0));
+                        cutoff.setDate(cutoff.getDate() - 30);
+                        break;
+                }
+
+                if (cutoff) {
+                    filtered = filtered.filter(f => new Date(f.first_seen) >= cutoff);
+                }
+            } else {
+                // Custom date range
+                if (dateFrom) {
+                    const fromDate = new Date(dateFrom);
+                    filtered = filtered.filter(f => new Date(f.first_seen) >= fromDate);
+                }
+                if (dateTo) {
+                    const toDate = new Date(dateTo);
+                    toDate.setHours(23, 59, 59, 999);
+                    filtered = filtered.filter(f => new Date(f.first_seen) <= toDate);
+                }
+            }
+
+            // Time of day filter
+            if (timeRange) {
+                filtered = filtered.filter(f => {
+                    const hour = new Date(f.first_seen).getHours();
+                    switch(timeRange) {
+                        case 'morning': return hour >= 6 && hour < 12;
+                        case 'afternoon': return hour >= 12 && hour < 18;
+                        case 'evening': return hour >= 18 && hour < 24;
+                        case 'night': return hour >= 0 && hour < 6;
+                    }
+                    return true;
+                });
+            }
+
+            // Text search filters
+            const searchIcao = document.getElementById('search-icao').value.toLowerCase();
+            const searchReg = document.getElementById('search-reg').value.toLowerCase();
+            const searchOperator = document.getElementById('search-operator').value.toLowerCase();
+            const searchAircraft = document.getElementById('search-aircraft').value.toLowerCase();
+            const searchSquawk = document.getElementById('search-squawk').value.toLowerCase();
+
+            if (searchIcao) {
+                filtered = filtered.filter(f =>
+                    (f.icao || '').toLowerCase().includes(searchIcao) ||
+                    (f.callsign || '').toLowerCase().includes(searchIcao)
+                );
+            }
+
+            if (searchReg) {
+                filtered = filtered.filter(f =>
+                    (f.registration || '').toLowerCase().includes(searchReg)
+                );
+            }
+
+            if (searchOperator) {
+                filtered = filtered.filter(f =>
+                    (f.operator || '').toLowerCase().includes(searchOperator) ||
+                    (f.operator_callsign || '').toLowerCase().includes(searchOperator)
+                );
+            }
+
+            if (searchAircraft) {
+                filtered = filtered.filter(f =>
+                    (f.manufacturer || '').toLowerCase().includes(searchAircraft) ||
+                    (f.aircraft_model || '').toLowerCase().includes(searchAircraft) ||
+                    (f.aircraft_type || '').toLowerCase().includes(searchAircraft)
+                );
+            }
+
+            if (searchSquawk) {
+                filtered = filtered.filter(f =>
+                    (f.squawk || '').includes(searchSquawk)
+                );
+            }
+
+            // Numeric range filters
+            const altMin = document.getElementById('alt-min').value;
+            const altMax = document.getElementById('alt-max').value;
+            const speedMin = document.getElementById('speed-min').value;
+            const speedMax = document.getElementById('speed-max').value;
+            const vsMin = document.getElementById('vs-min').value;
+            const vsMax = document.getElementById('vs-max').value;
+
+            if (altMin) {
+                filtered = filtered.filter(f => (f.altitude_max || 0) >= parseInt(altMin));
+            }
+            if (altMax) {
+                filtered = filtered.filter(f => (f.altitude_max || 0) <= parseInt(altMax));
+            }
+
+            if (speedMin) {
+                filtered = filtered.filter(f => (f.speed_max || 0) >= parseInt(speedMin));
+            }
+            if (speedMax) {
+                filtered = filtered.filter(f => (f.speed_max || 0) <= parseInt(speedMax));
+            }
+
+            if (vsMin) {
+                filtered = filtered.filter(f => Math.abs(f.vertical_rate || 0) >= parseInt(vsMin));
+            }
+            if (vsMax) {
+                filtered = filtered.filter(f => Math.abs(f.vertical_rate || 0) <= parseInt(vsMax));
+            }
+
+            filteredFlights = filtered;
+            sortFlights();
+            displayFlights(filteredFlights);
+            updateActiveFilters();
+        }
+
+        function clearFilters() {
+            // Clear all filter inputs
+            document.getElementById('date-quick-filter').value = 'all';
+            document.getElementById('date-from').value = '';
+            document.getElementById('date-to').value = '';
+            document.getElementById('time-filter').value = '';
+            document.getElementById('search-icao').value = '';
+            document.getElementById('search-reg').value = '';
+            document.getElementById('search-operator').value = '';
+            document.getElementById('search-aircraft').value = '';
+            document.getElementById('search-squawk').value = '';
+            document.getElementById('alt-min').value = '';
+            document.getElementById('alt-max').value = '';
+            document.getElementById('speed-min').value = '';
+            document.getElementById('speed-max').value = '';
+            document.getElementById('vs-min').value = '';
+            document.getElementById('vs-max').value = '';
+            document.getElementById('quick-search').value = '';
+
+            applyFilters();
+        }
+
+        function updateActiveFilters() {
+            const tags = [];
+
+            // Collect active filters
+            const quickDate = document.getElementById('date-quick-filter').value;
+            if (quickDate && quickDate !== 'all') tags.push(`Date: ${quickDate}`);
+
+            const dateFrom = document.getElementById('date-from').value;
+            const dateTo = document.getElementById('date-to').value;
+            if (dateFrom || dateTo) {
+                tags.push(`Date Range: ${dateFrom || 'any'} to ${dateTo || 'any'}`);
+            }
+
+            const timeRange = document.getElementById('time-filter').value;
+            if (timeRange) tags.push(`Time: ${timeRange}`);
+
+            const searchIcao = document.getElementById('search-icao').value;
+            if (searchIcao) tags.push(`ICAO/Call: ${searchIcao}`);
+
+            const searchReg = document.getElementById('search-reg').value;
+            if (searchReg) tags.push(`Reg: ${searchReg}`);
+
+            const searchOperator = document.getElementById('search-operator').value;
+            if (searchOperator) tags.push(`Operator: ${searchOperator}`);
+
+            const searchAircraft = document.getElementById('search-aircraft').value;
+            if (searchAircraft) tags.push(`Aircraft: ${searchAircraft}`);
+
+            const altMin = document.getElementById('alt-min').value;
+            const altMax = document.getElementById('alt-max').value;
+            if (altMin || altMax) {
+                tags.push(`Alt: ${altMin || '0'}-${altMax || '∞'} ft`);
+            }
+
+            const speedMin = document.getElementById('speed-min').value;
+            const speedMax = document.getElementById('speed-max').value;
+            if (speedMin || speedMax) {
+                tags.push(`Speed: ${speedMin || '0'}-${speedMax || '∞'} kts`);
+            }
+
+            const vsMin = document.getElementById('vs-min').value;
+            const vsMax = document.getElementById('vs-max').value;
+            if (vsMin || vsMax) {
+                tags.push(`V/S: ${vsMin || '0'}-${vsMax || '∞'} ft/min`);
+            }
+
+            const searchSquawk = document.getElementById('search-squawk').value;
+            if (searchSquawk) tags.push(`Squawk: ${searchSquawk}`);
+
+            // Display active filters
+            const activeDiv = document.getElementById('active-filters');
+            const tagsDiv = document.getElementById('filter-tags');
+
+            if (tags.length > 0) {
+                tagsDiv.innerHTML = tags.map(t => `<span class="filter-tag">${t}</span>`).join('');
+                activeDiv.style.display = 'block';
+            } else {
+                activeDiv.style.display = 'none';
+            }
+        }
+
+        function sortFlights() {
+            const col = currentSort.column;
+            const asc = currentSort.ascending;
+
+            filteredFlights.sort((a, b) => {
+                let valA, valB;
+
+                switch(col) {
+                    case 0: // Date
+                        valA = new Date(a.first_seen);
+                        valB = new Date(b.first_seen);
+                        break;
+                    case 1: // ICAO
+                        valA = a.icao || '';
+                        valB = b.icao || '';
+                        break;
+                    case 2: // Callsign
+                        valA = a.callsign || '';
+                        valB = b.callsign || '';
+                        break;
+                    case 3: // Registration
+                        valA = a.registration || '';
+                        valB = b.registration || '';
+                        break;
+                    case 4: // Aircraft
+                        valA = `${a.manufacturer || ''} ${a.aircraft_model || ''}`;
+                        valB = `${b.manufacturer || ''} ${b.aircraft_model || ''}`;
+                        break;
+                    case 5: // Operator
+                        valA = a.operator || '';
+                        valB = b.operator || '';
+                        break;
+                    case 6: // Route
+                        valA = a.origin_airport || '';
+                        valB = b.origin_airport || '';
+                        break;
+                    case 7: // Altitude
+                        valA = a.altitude_max || 0;
+                        valB = b.altitude_max || 0;
+                        break;
+                    case 8: // Vertical Speed
+                        valA = Math.abs(a.vertical_rate || 0);
+                        valB = Math.abs(b.vertical_rate || 0);
+                        break;
+                    case 9: // Speed
+                        valA = a.speed_max || 0;
+                        valB = b.speed_max || 0;
+                        break;
+                    case 10: // Squawk
+                        valA = a.squawk || '';
+                        valB = b.squawk || '';
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (typeof valA === 'string') {
+                    return asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                } else {
+                    return asc ? valA - valB : valB - valA;
+                }
+            });
+        }
+
+        function sortTable(col) {
+            if (currentSort.column === col) {
+                currentSort.ascending = !currentSort.ascending;
+            } else {
+                currentSort.column = col;
+                currentSort.ascending = true;
+            }
+
+            // Update sort indicators
+            for (let i = 0; i <= 10; i++) {
+                const indicator = document.getElementById(`sort-${i}`);
+                if (i === col) {
+                    indicator.textContent = currentSort.ascending ? '▲' : '▼';
+                } else {
+                    indicator.textContent = '';
+                }
+            }
+
+            sortFlights();
+            displayFlights(filteredFlights);
+        }
+
+        function displayFlights(flights) {
+            const tbody = document.getElementById('log-tbody');
+            tbody.innerHTML = '';
+
+            document.getElementById('showing-flights').textContent = flights.length;
+
+            if (flights.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" class="no-data">No flights match your filters. Try adjusting the criteria!</td></tr>';
+                return;
+            }
+
+            flights.forEach(flight => {
+                const row = document.createElement('tr');
+                const icao = (flight.icao || 'N/A').toUpperCase();
+                const callsign = (flight.callsign || '').trim() || 'N/A';
+                const firstSeen = new Date(flight.first_seen).toLocaleString();
+
+                // Aircraft details
+                const registration = flight.registration || flight.callsign || 'Unknown';
+                const manufacturer = flight.manufacturer || '';
+                const model = flight.aircraft_model || flight.aircraft_type || '';
+                const year = flight.year_built ? ` (${flight.year_built})` : '';
+                const aircraft = manufacturer && model ? `${manufacturer} ${model}${year}` : (model || 'Unknown');
+
+                // Route
+                const origin = flight.origin_airport || '?';
+                const dest = flight.destination_airport || '?';
+                const route = (origin !== '?' || dest !== '?') ? `${origin} → ${dest}` : '-';
+
+                // Operator
+                const operator = flight.operator || (flight.operator_callsign || '-');
+
+                // Vertical rate
+                const vertRate = flight.vertical_rate ?
+                    (flight.vertical_rate > 0 ? `↑${flight.vertical_rate}` : `↓${Math.abs(flight.vertical_rate)}`) : '-';
+
+                // Squawk with emergency highlighting
+                let squawkDisplay = flight.squawk || '-';
+                if (flight.emergency) {
+                    squawkDisplay = `<span style="background: #ff0000; color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold;">${squawkDisplay}</span>`;
+                }
+
+                row.innerHTML = `
+                    <td class="time">${firstSeen}</td>
+                    <td class="icao">${icao}</td>
+                    <td class="callsign">${callsign}</td>
+                    <td>${registration}</td>
+                    <td style="font-size: 0.85em;">${aircraft}</td>
+                    <td style="font-size: 0.85em;">${operator}</td>
+                    <td style="font-size: 0.85em;">${route}</td>
+                    <td>${(flight.altitude_max || 0).toLocaleString()} ft</td>
+                    <td style="font-size: 0.85em;">${vertRate}</td>
+                    <td>${flight.speed_max || 0} kts</td>
+                    <td>${squawkDisplay}</td>
+                    <td style="white-space: nowrap;">
+                        ${callsign !== 'N/A' ?
+                            `<a href="https://flightaware.com/live/flight/${callsign}" target="_blank" class="link-btn">FA</a>` : ''}
+                        <a href="https://globe.adsbexchange.com/?icao=${icao.toLowerCase()}" target="_blank" class="link-btn">AX</a>
+                        ${registration !== 'Unknown' && registration !== callsign ?
+                            `<a href="https://flightaware.com/resources/registration/${registration}" target="_blank" class="link-btn">Reg</a>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function showError() {
+            const tbody = document.getElementById('log-tbody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="12" class="no-data">
+                        <h3>⚠️ Could not connect to API server</h3>
+                        <br>
+                        <p>Make sure the log API server is running:</p>
+                        <code style="background: #333; color: #0f0; padding: 10px; display: block; margin: 10px auto; max-width: 400px; border-radius: 5px;">
+                        python3 ~/radioconda/Projects/log_server.py
+                        </code>
+                        <br>
+                        <button class="btn" onclick="loadLog()">Try Again</button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function exportCSV() {
+            const flights = filteredFlights.length > 0 ? filteredFlights : allFlights;
+
+            if (flights.length === 0) {
+                alert('No data to export!');
+                return;
+            }
+
+            const headers = ['Date/Time', 'ICAO', 'Callsign', 'Registration', 'Manufacturer', 'Model', 'Year', 'Operator', 'Origin', 'Destination', 'Max Altitude', 'Max Speed', 'Vertical Speed', 'Squawk', 'Messages'];
+            const rows = flights.map(f => [
+                f.first_seen,
+                f.icao,
+                f.callsign || '',
+                f.registration || '',
+                f.manufacturer || '',
+                f.aircraft_model || '',
+                f.year_built || '',
+                f.operator || '',
+                f.origin_airport || '',
+                f.destination_airport || '',
+                f.altitude_max || 0,
+                f.speed_max || 0,
+                f.vertical_rate || 0,
+                f.squawk || '',
+                f.messages_total || 0
+            ]);
+
+            let csv = headers.join(',') + '\n';
+            csv += rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `flight_log_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+        }
+
+        // Quick search functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            const quickSearch = document.getElementById('quick-search');
+            quickSearch.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase();
+                const filtered = (filteredFlights.length > 0 ? filteredFlights : allFlights).filter(f =>
+                    (f.callsign || '').toLowerCase().includes(query) ||
+                    (f.icao || '').toLowerCase().includes(query) ||
+                    (f.registration || '').toLowerCase().includes(query) ||
+                    (f.operator || '').toLowerCase().includes(query)
+                );
+                displayFlights(filtered);
+                document.getElementById('showing-flights').textContent = filtered.length;
+            });
+
+            // Quick date filter auto-apply
+            document.getElementById('date-quick-filter').addEventListener('change', () => {
+                if (document.getElementById('date-quick-filter').value !== '') {
+                    document.getElementById('date-from').value = '';
+                    document.getElementById('date-to').value = '';
+                }
+                applyFilters();
+            });
+        });
+
+        // Initial load
+        loadLog();
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadLog, 30000);
+    </script>
+<script src="status_indicator.js?v=2"></script>
+</body>
+</html>

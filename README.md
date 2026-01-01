@@ -58,6 +58,30 @@ A comprehensive, professional-grade ADS-B aircraft tracking system with intellig
 - 🌅 Sunrise/sunset effects quantification
 - 💾 Efficient storage (~260 MB/month @ 10-second sampling)
 
+### Advanced Coverage Analysis 🎯
+- 📡 **Antenna Location Estimation**
+  - Automatic triangulation from aircraft positions
+  - RSSI-weighted calculation for accuracy
+  - Confidence ratings based on sample size
+  - Height estimation using geometry
+- 🗺️ **3D Signal Heatmap Visualization**
+  - Altitude-sliced heatmaps (5 ranges: 0-50,000 ft)
+  - Toggle overlay on/off with checkbox
+  - Interactive altitude slider
+  - Color-coded signal strength (red=weak → green=strong)
+  - Identify dead zones and terrain blocking
+- 📊 **360° Coverage Polar Chart**
+  - 16-direction compass coverage analysis
+  - Signal strength color-coding by RSSI
+  - Distance rings with km labels
+  - Prominent N/E/S/W cardinal markers
+  - Blind spot detection
+  - Auto-scaling (max 10-11 rings)
+- 📍 **Antenna Marker on Map**
+  - Shows calculated antenna location
+  - Range rings at 10, 20, 50, 100 km
+  - Click for detailed location info
+
 ---
 
 ## 🛠️ Hardware Requirements
@@ -193,10 +217,17 @@ python3 log_server.py
 ### 8. View Your Tracking System
 
 Open your browser to:
-- **Live Map:** http://localhost:8080/
+- **Live Map:** http://localhost:8080/ (includes signal heatmap overlay!)
 - **Statistics:** http://localhost:8080/stats.html
 - **Flight Log:** http://localhost:8080/log.html
-- **Signal Monitor:** http://localhost:8080/signal-monitor.html
+- **Signal Monitor:** http://localhost:8080/signal-monitor.html (includes coverage analysis!)
+
+### 9. Enable Signal Heatmap (Optional)
+
+On the homepage, check the "🗺️ Signal Heatmap" box to see:
+- Signal strength distribution across your coverage area
+- Dead zones caused by terrain/buildings
+- Coverage patterns at different altitudes (use slider)
 
 ---
 
@@ -248,7 +279,12 @@ adsb-flight-tracker/
 │       ├── index.html              # Live map interface
 │       ├── stats.html              # Interactive statistics
 │       ├── log.html                # Flight log with advanced filters
-│       ├── signal-monitor.html     # Signal quality monitor
+│       ├── signal-monitor.html     # Signal quality monitor + coverage analysis
+│       ├── heatmap.js              # 3D signal heatmap visualization
+│       ├── coverage_viz.js         # 360° polar coverage chart
+│       ├── antenna_marker.js       # Antenna location marker
+│       ├── homepage_status.js      # System status integration
+│       ├── status_indicator.js     # Floating status panel
 │       └── data/                   # dump1090 JSON output
 ├── docs/
 │   ├── ROUTE_SETUP_GUIDE.md        # API setup instructions
