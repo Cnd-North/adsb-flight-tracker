@@ -71,7 +71,7 @@ For serious enthusiasts wanting the best possible reception.
   - Single-purpose (ADS-B only)
   - Slightly more expensive
 - **Best for:** Dedicated ADS-B tracking
-- [Buy on Amazon](https://www.amazon.com/s?k=flightaware+pro+stick) *
+- [Buy on Amazon](https://www.amazon.com/s?k=flightaware+pro+stick&tag=electrobio-20) *
 
 ### RTL-SDR Blog V3
 - **Price:** ~$30
@@ -84,7 +84,7 @@ For serious enthusiasts wanting the best possible reception.
   - Needs external filter for best ADS-B performance
   - Slightly less sensitive than Pro Stick Plus
 - **Best for:** Multi-purpose SDR, beginners
-- [Buy on Amazon](https://www.amazon.com/s?k=rtl-sdr+blog+v3) *
+- [Buy on Amazon](https://www.amazon.com/s?k=rtl-sdr+blog+v3&tag=electrobio-20) *
 
 ### Generic RTL2832U Dongles
 - **Price:** ~$15-25
@@ -96,7 +96,7 @@ For serious enthusiasts wanting the best possible reception.
   - No built-in LNA or filter
   - Frequency drift
 - **Best for:** Absolute budget builds only
-- [Buy on Amazon](https://www.amazon.com/s?k=rtl2832u) *
+- [Buy on Amazon](https://www.amazon.com/s?k=rtl2832u&tag=electrobio-20) *
 
 ---
 
@@ -115,7 +115,7 @@ For serious enthusiasts wanting the best possible reception.
   - Limited range
   - Affected by buildings
 - **Best for:** Urban apartments, testing
-- [Buy on Amazon](https://www.amazon.com/s?k=1090+mhz+antenna+magnetic) *
+- [Buy on Amazon](https://www.amazon.com/s?k=1090+mhz+antenna+magnetic&tag=electrobio-20) *
 
 #### Window-Mount Antenna
 - **Price:** ~$30-40
@@ -127,7 +127,7 @@ For serious enthusiasts wanting the best possible reception.
 - **Cons:**
   - Still limited by building
 - **Best for:** High-rise apartments
-- [Buy on Amazon](https://www.amazon.com/s?k=1090+mhz+antenna+window) *
+- [Buy on Amazon](https://www.amazon.com/s?k=1090+mhz+antenna+window&tag=electrobio-20) *
 
 ### Outdoor Antennas ⭐ RECOMMENDED
 
@@ -142,7 +142,7 @@ For serious enthusiasts wanting the best possible reception.
   - Requires mounting
   - Needs coax cable
 - **Best for:** Most users
-- [Buy on Amazon](https://www.amazon.com/s?k=1090+mhz+collinear+antenna) *
+- [Buy on Amazon](https://www.amazon.com/s?k=1090+mhz+collinear+antenna&tag=electrobio-20) *
 
 #### High-Gain Collinear (8 dBi)
 - **Price:** ~$80-120
@@ -155,7 +155,7 @@ For serious enthusiasts wanting the best possible reception.
   - Expensive
   - Requires good mounting
 - **Best for:** Serious enthusiasts, feeders
-- [Buy on Amazon](https://www.amazon.com/s?k=1090+mhz+antenna+8dbi) *
+- [Buy on Amazon](https://www.amazon.com/s?k=1090+mhz+antenna+8dbi&tag=electrobio-20) *
 
 ---
 
@@ -167,19 +167,19 @@ For serious enthusiasts wanting the best possible reception.
 - **Price:** ~$0.50/foot
 - **Loss:** ~6 dB/100ft @ 1090 MHz
 - **Best for:** Runs under 25 feet
-- [Buy on Amazon](https://www.amazon.com/s?k=rg6+coax) *
+- [Buy on Amazon](https://www.amazon.com/s?k=rg6+coax&tag=electrobio-20) *
 
 #### LMR-240 (Good)
 - **Price:** ~$1.00/foot
 - **Loss:** ~4 dB/100ft @ 1090 MHz
 - **Best for:** Runs 25-50 feet
-- [Buy on Amazon](https://www.amazon.com/s?k=lmr-240) *
+- [Buy on Amazon](https://www.amazon.com/s?k=lmr-240&tag=electrobio-20) *
 
 #### LMR-400 (Best) ⭐ RECOMMENDED
 - **Price:** ~$1.50/foot
 - **Loss:** ~2.5 dB/100ft @ 1090 MHz
 - **Best for:** Runs over 50 feet, permanent installations
-- [Buy on Amazon](https://www.amazon.com/s?k=lmr-400) *
+- [Buy on Amazon](https://www.amazon.com/s?k=lmr-400&tag=electrobio-20) *
 
 ### Cable Length Guidelines
 - **Under 10 feet:** Use RG-6 (included cable is fine)
@@ -201,7 +201,7 @@ For serious enthusiasts wanting the best possible reception.
 - **Cons:**
   - Needs power supply, case, SD card
 - **Best for:** Dedicated ADS-B station
-- [Buy on Amazon](https://www.amazon.com/s?k=raspberry+pi+4) *
+- [Buy on Amazon](https://www.amazon.com/s?k=raspberry+pi+4&tag=electrobio-20) *
 
 ### Raspberry Pi Zero 2 W (Budget)
 - **Price:** ~$15
@@ -213,7 +213,7 @@ For serious enthusiasts wanting the best possible reception.
   - Limited to basic tracking (no analytics)
   - Single-core struggles with web interface
 - **Best for:** Budget builds, indoor stations
-- [Buy on Amazon](https://www.amazon.com/s?k=raspberry+pi+zero+2) *
+- [Buy on Amazon](https://www.amazon.com/s?k=raspberry+pi+zero+2&tag=electrobio-20) *
 
 ### Existing PC/Mac
 - **Price:** Free (use what you have)
@@ -236,7 +236,7 @@ For serious enthusiasts wanting the best possible reception.
   - More expensive
   - Higher power
 - **Best for:** Multi-purpose home server
-- [Buy on Amazon](https://www.amazon.com/s?k=intel+nuc) *
+- [Buy on Amazon](https://www.amazon.com/s?k=intel+nuc&tag=electrobio-20) *
 
 ---
 
@@ -244,31 +244,31 @@ For serious enthusiasts wanting the best possible reception.
 
 ### Power Supply
 - Raspberry Pi: Official 5V 3A USB-C power supply - $8
-- [Buy on Amazon](https://www.amazon.com/s?k=raspberry+pi+power+supply) *
+- [Buy on Amazon](https://www.amazon.com/s?k=raspberry+pi+power+supply&tag=electrobio-20) *
 
 ### Storage
 - **32GB microSD card** (minimum) - $8
 - **64GB microSD card** (recommended) - $12
 - Class 10 or better, A1 rating preferred
-- [Buy on Amazon](https://www.amazon.com/s?k=microsd+64gb+a1) *
+- [Buy on Amazon](https://www.amazon.com/s?k=microsd+64gb+a1&tag=electrobio-20) *
 
 ### Case
 - **Official Raspberry Pi case** - $8
 - **Passive cooling case** (aluminum) - $12
 - **Active cooling case** (with fan) - $15
-- [Buy on Amazon](https://www.amazon.com/s?k=raspberry+pi+4+case) *
+- [Buy on Amazon](https://www.amazon.com/s?k=raspberry+pi+4+case&tag=electrobio-20) *
 
 ### Lightning Protection ⚠️ IMPORTANT FOR OUTDOOR
 - **Coax lightning arrestor** - $20-30
 - Grounds RF to earth before entering house
 - **Required for outdoor antennas**
-- [Buy on Amazon](https://www.amazon.com/s?k=coax+lightning+arrestor) *
+- [Buy on Amazon](https://www.amazon.com/s?k=coax+lightning+arrestor&tag=electrobio-20) *
 
 ### Antenna Mounting
 - **Chimney mount** - $25-40
 - **Pole mount** - $15-25
 - **Attic/wall mount** - $10-20
-- [Buy on Amazon](https://www.amazon.com/s?k=antenna+mount) *
+- [Buy on Amazon](https://www.amazon.com/s?k=antenna+mount&tag=electrobio-20) *
 
 ---
 

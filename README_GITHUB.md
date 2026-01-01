@@ -67,21 +67,21 @@ A comprehensive, professional-grade ADS-B aircraft tracking system with intellig
 1. **RTL-SDR USB Dongle**
    - FlightAware Pro Stick Plus (recommended) - ~$25
    - Generic RTL2832U based dongle - ~$15-30
-   - [Shop on Amazon](https://www.amazon.com/s?k=rtl-sdr) *
+   - [Shop on Amazon](https://www.amazon.com/s?k=rtl-sdr&tag=electrobio-20) *
 
 2. **1090 MHz ADS-B Antenna**
    - Outdoor antenna (best performance) - ~$30-60
    - Indoor antenna (works for nearby aircraft) - ~$20-40
-   - [Shop on Amazon](https://www.amazon.com/s?k=1090+mhz+antenna) *
+   - [Shop on Amazon](https://www.amazon.com/s?k=1090+mhz+antenna&tag=electrobio-20) *
 
 3. **Computer/Raspberry Pi**
    - Raspberry Pi 4 (2GB+ RAM recommended) - ~$45-75
    - Any Linux/Mac/Windows PC with USB port
-   - [Raspberry Pi on Amazon](https://www.amazon.com/s?k=raspberry+pi+4) *
+   - [Raspberry Pi on Amazon](https://www.amazon.com/s?k=raspberry+pi+4&tag=electrobio-20) *
 
 4. **Optional: Coax Cable**
    - Low-loss coax (LMR-400 or RG-6) if antenna is far from receiver
-   - [Shop on Amazon](https://www.amazon.com/s?k=lmr-400) *
+   - [Shop on Amazon](https://www.amazon.com/s?k=lmr-400&tag=electrobio-20) *
 
 ### Recommended Complete Kits
 
