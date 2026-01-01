@@ -9,7 +9,7 @@ This project is built by aviation enthusiasts for aviation enthusiasts. We welco
 ### 1. 🐛 Report Bugs
 Found a bug? Help us fix it!
 
-- Check if the bug has already been reported in [Issues](https://github.com/CndNorth/adsb-flight-tracker/issues)
+- Check if the bug has already been reported in [Issues](https://github.com/Cnd-North/adsb-flight-tracker/issues)
 - If not, open a new issue with:
   - Clear, descriptive title
   - Detailed description of the problem
@@ -21,7 +21,7 @@ Found a bug? Help us fix it!
 ### 2. 💡 Suggest Features
 Have an idea? We'd love to hear it!
 
-- Check existing [Feature Requests](https://github.com/CndNorth/adsb-flight-tracker/issues?q=label%3Aenhancement)
+- Check existing [Feature Requests](https://github.com/Cnd-North/adsb-flight-tracker/issues?q=label%3Aenhancement)
 - Open a new issue with:
   - Clear description of the feature
   - Why it would be useful
@@ -41,7 +41,7 @@ For code changes:
 
 1. **Fork and Clone**
    ```bash
-   git clone https://github.com/CndNorth/adsb-flight-tracker.git
+   git clone https://github.com/Cnd-North/adsb-flight-tracker.git
    cd adsb-flight-tracker
    ```
 
@@ -281,8 +281,8 @@ Report issues to: [project maintainers]
 
 ## ❓ Questions?
 
-- 💬 [GitHub Discussions](https://github.com/CndNorth/adsb-flight-tracker/discussions)
-- 🐛 [Issues](https://github.com/CndNorth/adsb-flight-tracker/issues)
+- 💬 [GitHub Discussions](https://github.com/Cnd-North/adsb-flight-tracker/discussions)
+- 🐛 [Issues](https://github.com/Cnd-North/adsb-flight-tracker/issues)
 - 📧 Email: your-email@example.com
 
 ---
@@ -290,7 +290,7 @@ Report issues to: [project maintainers]
 ## 🎉 Recognition
 
 Contributors are listed in:
-- [Contributors page](https://github.com/CndNorth/adsb-flight-tracker/graphs/contributors)
+- [Contributors page](https://github.com/Cnd-North/adsb-flight-tracker/graphs/contributors)
 - Release notes
 - README acknowledgments
 
