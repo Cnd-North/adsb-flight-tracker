@@ -8,7 +8,9 @@ class SignalHeatmap {
         this.heatmapData = null;
         this.currentAltitudeIndex = 2; // Default to 5,000-10,000 ft
         this.heatmapLayer = null;
+        this.heatmapLayers = []; // Array to hold all altitude layers
         this.enabled = false;
+        this.showAll = false; // Toggle for showing all altitudes
         this.updateInterval = 30000; // Update every 30 seconds
     }
 
@@ -86,6 +88,37 @@ class SignalHeatmap {
         OLMap.addLayer(this.heatmapLayer);
     }
 
+    createAllHeatmapLayers() {
+        // Create 5 layers, one for each altitude range
+        // Clear existing layers if any
+        this.heatmapLayers.forEach(layer => OLMap.removeLayer(layer));
+        this.heatmapLayers = [];
+
+        for (let i = 0; i < 5; i++) {
+            const vectorSource = new ol.source.Vector();
+            const layer = new ol.layer.Heatmap({
+                source: vectorSource,
+                blur: 20,
+                radius: 12,
+                weight: function(feature) {
+                    return feature.get('weight');
+                },
+                gradient: [
+                    '#00000000',
+                    '#ef4444',
+                    '#f59e0b',
+                    '#fbbf24',
+                    '#84cc16',
+                    '#4ade80'
+                ],
+                opacity: 0.4, // Lower opacity for overlapping layers
+                visible: false
+            });
+            OLMap.addLayer(layer);
+            this.heatmapLayers.push(layer);
+        }
+    }
+
     updateHeatmapLayer() {
         if (!this.heatmapData || !this.heatmapLayer) return;
 
@@ -114,15 +147,81 @@ class SignalHeatmap {
         });
     }
 
+    updateAllHeatmapLayers() {
+        if (!this.heatmapData || this.heatmapLayers.length === 0) {
+            // Create layers if they don't exist
+            this.createAllHeatmapLayers();
+        }
+
+        if (!this.heatmapData) return;
+
+        // Update each altitude layer
+        this.heatmapData.altitude_ranges.forEach((rangeData, index) => {
+            if (index >= this.heatmapLayers.length) return;
+
+            const source = this.heatmapLayers[index].getSource();
+            source.clear();
+
+            if (!rangeData.points) return;
+
+            console.log(`Updating layer ${index}: ${rangeData.label} with ${rangeData.points.length} points`);
+
+            rangeData.points.forEach(point => {
+                const feature = new ol.Feature({
+                    geometry: new ol.geom.Point(
+                        ol.proj.fromLonLat([point.lon, point.lat])
+                    ),
+                    weight: point.weight
+                });
+                source.addFeature(feature);
+            });
+        });
+    }
+
     toggle(enabled) {
         this.enabled = enabled;
-        if (this.heatmapLayer) {
-            this.heatmapLayer.setVisible(enabled);
-            if (enabled) {
-                this.updateHeatmapLayer();
+
+        if (this.showAll) {
+            // Toggle all layers
+            this.heatmapLayers.forEach(layer => layer.setVisible(enabled));
+            if (enabled && this.heatmapLayers.length === 0) {
+                this.updateAllHeatmapLayers();
+            }
+        } else {
+            // Toggle single layer
+            if (this.heatmapLayer) {
+                this.heatmapLayer.setVisible(enabled);
+                if (enabled) {
+                    this.updateHeatmapLayer();
+                }
             }
         }
         console.log('Heatmap', enabled ? 'enabled' : 'disabled');
+    }
+
+    toggleShowAll(showAll) {
+        this.showAll = showAll;
+
+        if (showAll) {
+            // Hide single layer
+            if (this.heatmapLayer) {
+                this.heatmapLayer.setVisible(false);
+            }
+            // Show all layers
+            if (this.enabled) {
+                this.updateAllHeatmapLayers();
+                this.heatmapLayers.forEach(layer => layer.setVisible(true));
+            }
+        } else {
+            // Hide all layers
+            this.heatmapLayers.forEach(layer => layer.setVisible(false));
+            // Show single layer
+            if (this.enabled && this.heatmapLayer) {
+                this.heatmapLayer.setVisible(true);
+                this.updateHeatmapLayer();
+            }
+        }
+        console.log('Show all altitudes:', showAll);
     }
 
     setAltitudeRange(index) {

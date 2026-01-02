@@ -98,8 +98,16 @@
 	<!-- Heatmap Controls -->
 	<div id="heatmap_controls" style="background: rgba(0,0,0,0.7); color: #fff; padding: 10px 20px; display: flex; align-items: center; gap: 20px; font-size: 12px; border-bottom: 1px solid #333;">
 		<label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+			<input type="checkbox" id="antenna-toggle" checked onchange="toggleAntenna(this.checked)" style="cursor: pointer;">
+			<span>📡 Antenna Location</span>
+		</label>
+		<label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
 			<input type="checkbox" id="heatmap-toggle" onchange="toggleHeatmap(this.checked)" style="cursor: pointer;">
 			<span>🗺️ Signal Heatmap</span>
+		</label>
+		<label style="display: flex; align-items: center; gap: 8px; cursor: pointer; opacity: 0.5;" id="show-all-label">
+			<input type="checkbox" id="heatmap-show-all" onchange="toggleShowAllAltitudes(this.checked)" style="cursor: pointer;">
+			<span>Show All Altitudes</span>
 		</label>
 		<div id="heatmap-slider-container" style="display: flex; align-items: center; gap: 15px; opacity: 0.5; pointer-events: none;">
 			<label style="font-weight: bold;">Altitude:</label>
@@ -920,24 +928,59 @@
 		</div>
 
 		<div id="container_splitter"></div>
-<script src="antenna_marker.js?v=2"></script>
+<script src="antenna_marker.js?v=4"></script>
 	<script src="homepage_status.js?v=2"></script>
-	<script src="heatmap.js?v=1"></script>
+	<script src="heatmap.js?v=2"></script>
 
 <script>
+// Antenna marker control function
+function toggleAntenna(enabled) {
+	if (antennaMarker) {
+		antennaMarker.toggle(enabled);
+	}
+}
+
 // Heatmap control functions
 function toggleHeatmap(enabled) {
 	if (signalHeatmap) {
 		signalHeatmap.toggle(enabled);
 
-		// Enable/disable the slider
 		const sliderContainer = document.getElementById('heatmap-slider-container');
+		const showAllLabel = document.getElementById('show-all-label');
+
 		if (enabled) {
-			sliderContainer.style.opacity = '1';
-			sliderContainer.style.pointerEvents = 'auto';
+			// Enable the "Show All Altitudes" checkbox
+			showAllLabel.style.opacity = '1';
+			showAllLabel.style.pointerEvents = 'auto';
+
+			// Enable slider only if not showing all
+			if (!document.getElementById('heatmap-show-all').checked) {
+				sliderContainer.style.opacity = '1';
+				sliderContainer.style.pointerEvents = 'auto';
+			}
 		} else {
+			// Disable both the slider and "Show All" checkbox
+			showAllLabel.style.opacity = '0.5';
+			showAllLabel.style.pointerEvents = 'none';
 			sliderContainer.style.opacity = '0.5';
 			sliderContainer.style.pointerEvents = 'none';
+		}
+	}
+}
+
+function toggleShowAllAltitudes(showAll) {
+	if (signalHeatmap) {
+		signalHeatmap.toggleShowAll(showAll);
+
+		// Disable slider when showing all altitudes
+		const sliderContainer = document.getElementById('heatmap-slider-container');
+		if (showAll) {
+			sliderContainer.style.opacity = '0.5';
+			sliderContainer.style.pointerEvents = 'none';
+		} else if (document.getElementById('heatmap-toggle').checked) {
+			// Re-enable slider if heatmap is still enabled
+			sliderContainer.style.opacity = '1';
+			sliderContainer.style.pointerEvents = 'auto';
 		}
 	}
 }

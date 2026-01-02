@@ -67,7 +67,8 @@ A comprehensive, professional-grade ADS-B aircraft tracking system with intellig
 - 🗺️ **3D Signal Heatmap Visualization**
   - Altitude-sliced heatmaps (5 ranges: 0-50,000 ft)
   - Toggle overlay on/off with checkbox
-  - Interactive altitude slider
+  - Interactive altitude slider for single-range viewing
+  - "Show All Altitudes" mode to display all 5 layers simultaneously
   - Color-coded signal strength (red=weak → green=strong)
   - Identify dead zones and terrain blocking
 - 📊 **360° Coverage Polar Chart**
@@ -78,7 +79,8 @@ A comprehensive, professional-grade ADS-B aircraft tracking system with intellig
   - Blind spot detection
   - Auto-scaling (max 10-11 rings)
 - 📍 **Antenna Marker on Map**
-  - Shows calculated antenna location
+  - Shows calculated antenna location with 📡 icon
+  - Toggle antenna display on/off with checkbox
   - Range rings at 10, 20, 50, 100 km
   - Click for detailed location info
 
@@ -463,7 +465,7 @@ If you find this project useful, consider:
 - ⭐ Starring this repository
 - 🐛 Reporting bugs and suggesting features
 - 🛒 Using the affiliate links above when purchasing hardware (helps support development)
-- ☕ [Buy me a coffee](https://buymeacoffee.com/cnd-north)
+- ☕ [Buy me a coffee](https://buymeacoffee.com/electrobio)
 
 Happy tracking! ✈️📡
 
