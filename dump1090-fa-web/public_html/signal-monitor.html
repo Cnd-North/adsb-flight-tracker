@@ -459,7 +459,7 @@
 
         async function fetchData() {
             try {
-                const response = await fetch('http://localhost:8080/data/aircraft.json');
+                const response = await fetch('http://'+window.location.hostname+':8080/data/aircraft.json');
                 const data = await response.json();
 
                 // Extract metrics

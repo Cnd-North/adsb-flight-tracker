@@ -12,8 +12,8 @@ import os
 from datetime import datetime
 
 # Configuration
-AIRCRAFT_JSON = os.path.expanduser("~/radioconda/Projects/dump1090-fa-web/public_html/data/aircraft.json")
-DATABASE = os.path.expanduser("~/radioconda/Projects/flight_log.db")
+AIRCRAFT_JSON = os.path.expanduser("~/adsb-tracker/dump1090-fa-web/public_html/data/aircraft.json")
+DATABASE = os.path.expanduser("~/adsb-tracker/flight_log.db")
 OPENSKY_API = "https://opensky-network.org/api"
 UPDATE_INTERVAL = 30  # Check for new aircraft every 30 seconds
 

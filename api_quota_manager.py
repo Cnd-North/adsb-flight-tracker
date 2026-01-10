@@ -8,7 +8,7 @@ import json
 import os
 from datetime import datetime
 
-QUOTA_FILE = os.path.expanduser("~/radioconda/Projects/.api_quota.json")
+QUOTA_FILE = os.path.expanduser("~/adsb-tracker/.api_quota.json")
 
 # Monthly quotas for each API
 QUOTAS = {

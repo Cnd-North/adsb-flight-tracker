@@ -6,11 +6,14 @@
 echo "============================================================"
 echo "  ADS-B Flight Tracker - Starting All Services"
 echo "============================================================"
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 
 # Configuration
-DUMP1090_DATA_DIR="$HOME/radioconda/Projects/dump1090-fa-web/public_html/data"
-PROJECT_DIR="$HOME/radioconda/Projects"
+DUMP1090_DATA_DIR="$HOME/adsb-tracker/dump1090-fa-web/public_html/data"
+PROJECT_DIR="$HOME/adsb-tracker"
 LOG_DIR="$PROJECT_DIR/logs"
 
 # Create logs directory if it doesn't exist
@@ -57,6 +60,9 @@ else
         echo -e "  ${RED}✗${NC}  Failed to start dump1090"
     fi
 fi
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 
 echo "Step 2/6: Checking flight logger..."
@@ -75,6 +81,9 @@ else
         echo -e "  ${RED}✗${NC}  Failed to start flight logger"
     fi
 fi
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 
 echo "Step 3/6: Checking log API server..."
@@ -93,6 +102,9 @@ else
         echo -e "  ${RED}✗${NC}  Failed to start log server"
     fi
 fi
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 
 echo "Step 4/6: Checking position tracker..."
@@ -111,6 +123,9 @@ else
         echo -e "  ${RED}✗${NC}  Failed to start position tracker"
     fi
 fi
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 
 echo "Step 5/6: Checking signal logger..."
@@ -133,6 +148,9 @@ else
         echo -e "  ${YELLOW}⊝${NC}  Signal logger not found (optional)"
     fi
 fi
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 
 echo "Step 6/6: Checking web server..."
@@ -151,11 +169,17 @@ else
         echo -e "  ${RED}✗${NC}  Failed to start web server"
     fi
 fi
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 
 echo "============================================================"
 echo "  Status Summary"
 echo "============================================================"
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 
 # Check all services
@@ -185,33 +209,57 @@ for service in "${services[@]}"; do
     fi
 done
 
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 echo "============================================================"
 echo "  Access Your Tracker"
 echo "============================================================"
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 echo "  Live Map:        http://localhost:8080/"
 echo "  Statistics:      http://localhost:8080/stats.html"
 echo "  Flight Log:      http://localhost:8080/log.html"
 echo "  Signal Monitor:  http://localhost:8080/signal-monitor.html"
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 echo "============================================================"
 echo "  Logs Location"
 echo "============================================================"
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 echo "  Logs directory:  $LOG_DIR"
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 echo "  View live logs:"
 echo "    tail -f $LOG_DIR/flight_logger.log"
 echo "    tail -f $LOG_DIR/position_tracker.log"
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 echo "============================================================"
 echo "  Management Commands"
 echo "============================================================"
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 echo "  Check status:    ./check_status.sh"
 echo "  Stop all:        ./stop_adsb_tracker.sh"
 echo "  View coverage:   python3 analyze_coverage.py"
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
+
 echo ""
 
 if [ "$all_running" = true ]; then
@@ -219,5 +267,8 @@ if [ "$all_running" = true ]; then
 else
     echo -e "${YELLOW}Some services failed to start. Check logs for details.${NC}"
 fi
+
+# Start watchdog to monitor flight logger
+nohup ~/adsb-tracker/watchdog.sh > /dev/null 2>&1 &
 
 echo ""

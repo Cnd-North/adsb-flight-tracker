@@ -14,7 +14,7 @@ import sqlite3
 import os
 from datetime import datetime, timedelta
 
-DATABASE = os.path.expanduser("~/radioconda/Projects/flight_log.db")
+DATABASE = os.path.expanduser("~/adsb-tracker/flight_log.db")
 
 def print_header(title):
     """Print formatted section header"""

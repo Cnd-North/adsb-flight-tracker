@@ -32,7 +32,7 @@ class AntennaMarker {
 
     async loadAntennaData() {
         try {
-            const response = await fetch('http://localhost:8081/api/coverage');
+            const response = await fetch('http://'+window.location.hostname+':8081/api/coverage');
             const data = await response.json();
             this.antennaData = data.antenna;
         } catch (error) {

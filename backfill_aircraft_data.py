@@ -9,7 +9,7 @@ import requests
 import time
 import os
 
-DATABASE = os.path.expanduser("~/radioconda/Projects/flight_log.db")
+DATABASE = os.path.expanduser("~/adsb-tracker/flight_log.db")
 
 def get_aircraft_details(icao):
     """Get aircraft details from OpenSky Network"""

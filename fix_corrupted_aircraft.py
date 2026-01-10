@@ -4,7 +4,7 @@
 import sqlite3
 import os
 
-DATABASE = os.path.expanduser("~/radioconda/Projects/flight_log.db")
+DATABASE = os.path.expanduser("~/adsb-tracker/flight_log.db")
 
 # Known corrections based on external verification (FlightRadar24, ADS-B Exchange, etc.)
 AIRCRAFT_CORRECTIONS = {

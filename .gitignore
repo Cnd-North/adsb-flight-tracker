@@ -1,57 +1,20 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-*.egg-info/
-dist/
-build/
-
-# Database
 *.db
-*.db-journal
-*.sqlite
-*.sqlite3
-
-# Logs
+*.db-shm
+*.db-wal
+logs/
 *.log
-nohup.out
-flight_logger.log
-dump1090.log
-
-# OS
-.DS_Store
-Thumbs.db
-*.swp
-*.swo
-*~
-
-# IDE
-.vscode/
-.idea/
-*.sublime-*
-
-# dump1090 data (real-time JSON files)
-dump1090-fa-web/public_html/data/*.json
-
-# Temporary files
-*.tmp
-*.temp
+.api_quota.json
+*.backup
 *.bak
-
-# API keys and secrets
-.env
-secrets.txt
-api_keys.txt
-
-# Coverage reports
-htmlcov/
-.coverage
-.coverage.*
-
-# Virtual environments
-radioconda/
+*.bak2
+__pycache__/
+*.pyc
+.DS_Store
+nohup.out
+data/
+dump1090-fa-web/public_html/data/
+*.grc
+github_setup_answers.txt
+setup_github_repo.sh
+prepare_for_github.sh
+cleanup_for_github.sh

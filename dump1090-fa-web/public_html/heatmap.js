@@ -47,7 +47,7 @@ class SignalHeatmap {
 
     async loadHeatmapData() {
         try {
-            const response = await fetch('http://localhost:8081/api/heatmap');
+            const response = await fetch('http://'+window.location.hostname+':8081/api/heatmap');
             this.heatmapData = await response.json();
             console.log('Heatmap data loaded:', this.heatmapData.total_points, 'points');
 

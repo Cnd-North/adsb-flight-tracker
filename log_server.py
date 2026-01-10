@@ -10,7 +10,7 @@ import os
 import subprocess
 from urllib.parse import parse_qs, urlparse
 
-DATABASE = os.path.expanduser("~/radioconda/Projects/flight_log.db")
+DATABASE = os.path.expanduser("~/adsb-tracker/flight_log.db")
 PORT = 8081
 
 def is_process_running(pattern):
@@ -562,7 +562,7 @@ class LogAPIHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps({'error': str(e)}).encode())
 
 def main():
-    server = HTTPServer(('localhost', PORT), LogAPIHandler)
+    server = HTTPServer(('', PORT), LogAPIHandler)
     print("=" * 80)
     print(f"Flight Log API Server")
     print("=" * 80)

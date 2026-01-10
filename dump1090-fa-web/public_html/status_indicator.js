@@ -164,7 +164,7 @@ class StatusIndicator {
 
     async update() {
         try {
-            const response = await fetch('http://localhost:8081/api/status');
+            const response = await fetch('http://'+window.location.hostname+':8081/api/status');
             const data = await response.json();
             this.render(data);
         } catch (error) {

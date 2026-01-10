@@ -7,8 +7,8 @@ import requests
 import time
 import api_quota_manager as quota
 
-DATABASE = os.path.expanduser("~/radioconda/Projects/flight_log.db")
-API_KEY = '3e3ae5e788673f961d6d0049899416c1'
+DATABASE = os.path.expanduser("~/adsb-tracker/flight_log.db")
+API_KEY = os.getenv('AVIATIONSTACK_KEY', '')
 
 # ICAO to IATA mapping
 ICAO_TO_IATA = {

@@ -9,7 +9,7 @@ import requests
 import time
 import os
 
-DATABASE = os.path.expanduser("~/radioconda/Projects/flight_log.db")
+DATABASE = os.path.expanduser("~/adsb-tracker/flight_log.db")
 
 # FlightAware API Configuration
 # Get your free API key from: https://flightaware.com/commercial/aeroapi/

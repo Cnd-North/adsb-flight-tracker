@@ -24,7 +24,7 @@ class CoverageViz {
 
     async loadCoverageData() {
         try {
-            const response = await fetch('http://localhost:8081/api/coverage');
+            const response = await fetch('http://'+window.location.hostname+':8081/api/coverage');
             this.coverageData = await response.json();
             return this.coverageData;
         } catch (error) {

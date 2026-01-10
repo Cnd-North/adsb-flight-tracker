@@ -11,7 +11,7 @@ import os
 from datetime import datetime
 
 # Configuration
-AIRCRAFT_JSON = os.path.expanduser("~/radioconda/Projects/dump1090-fa-web/public_html/data/aircraft.json")
+AIRCRAFT_JSON = os.path.expanduser("~/adsb-tracker/dump1090-fa-web/public_html/data/aircraft.json")
 OPENSKY_API = "https://opensky-network.org/api/states/all"
 UPDATE_INTERVAL = 10  # seconds
 CACHE_DURATION = 300  # Cache API results for 5 minutes

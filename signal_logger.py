@@ -13,7 +13,7 @@ import math
 from datetime import datetime
 import os
 
-DATABASE = os.path.expanduser("~/radioconda/Projects/flight_log.db")
+DATABASE = os.path.expanduser("~/adsb-tracker/flight_log.db")
 DUMP1090_URL = "http://localhost:8080/data/aircraft.json"
 SAMPLE_INTERVAL = 10  # seconds
 
@@ -125,6 +125,7 @@ def cleanup_old_data(conn):
         print(f"🗑️  Cleaned up {deleted} old signal records (>7 days)")
 
     # Vacuum database to reclaim space
+    conn.commit()  # Commit transaction before VACUUM
     cursor.execute('VACUUM')
 
 def main():

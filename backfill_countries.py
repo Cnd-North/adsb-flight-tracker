@@ -4,7 +4,7 @@
 import sqlite3
 import os
 
-DATABASE = os.path.expanduser("~/radioconda/Projects/flight_log.db")
+DATABASE = os.path.expanduser("~/adsb-tracker/flight_log.db")
 
 # Aircraft registration prefixes to country mapping
 REGISTRATION_COUNTRY_PREFIXES = {

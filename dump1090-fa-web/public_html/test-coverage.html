@@ -58,7 +58,7 @@
     <script>
         async function testAPI() {
             try {
-                const response = await fetch('http://localhost:8081/api/coverage');
+                const response = await fetch('http://'+window.location.hostname+':8081/api/coverage');
                 const data = await response.json();
                 document.getElementById('api-result').textContent = JSON.stringify(data, null, 2);
 

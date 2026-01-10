@@ -36,7 +36,7 @@ def convert_icao_to_iata_callsign(callsign):
 
 # Test callsigns from your flights
 test_callsigns = ['ASA7004', 'WJA290', 'WEN3715', 'FLE1877']
-api_key = '3e3ae5e788673f961d6d0049899416c1'
+api_key = os.getenv('AVIATIONSTACK_KEY', '')
 
 print("=" * 70)
 print("TESTING CALLSIGN CONVERSION AND ROUTE LOOKUP")

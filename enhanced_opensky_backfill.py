@@ -10,7 +10,7 @@ import time
 import os
 from datetime import datetime, timedelta
 
-DATABASE = os.path.expanduser("~/radioconda/Projects/flight_log.db")
+DATABASE = os.path.expanduser("~/adsb-tracker/flight_log.db")
 
 def get_aircraft_metadata(icao):
     """Get aircraft details from OpenSky metadata API"""

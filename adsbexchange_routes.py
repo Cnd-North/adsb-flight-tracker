@@ -10,7 +10,7 @@ import requests
 import time
 import os
 
-DATABASE = os.path.expanduser("~/radioconda/Projects/flight_log.db")
+DATABASE = os.path.expanduser("~/adsb-tracker/flight_log.db")
 
 def get_adsbx_routes(icao):
     """Get route from ADS-B Exchange v2 API"""
