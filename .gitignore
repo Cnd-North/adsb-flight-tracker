@@ -18,3 +18,20 @@ github_setup_answers.txt
 setup_github_repo.sh
 prepare_for_github.sh
 cleanup_for_github.sh
+
+# API keys and secrets
+.env
+secrets.txt
+api_keys.txt
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+
+# Virtual environments
+radioconda/
+
+# Old/deprecated scripts
+start_adsb.sh
+stop_adsb.sh

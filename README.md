@@ -177,13 +177,7 @@ git clone https://github.com/Cnd-North/adsb-flight-tracker.git
 cd adsb-flight-tracker
 ```
 
-### 3. Set Up Database
-
-```bash
-python3 setup_database.py
-```
-
-### 4. (Optional) Configure API Keys
+### 3. (Optional) Configure API Keys
 
 **Aviation Stack** (for route data):
 ```bash
@@ -192,7 +186,7 @@ export AVIATIONSTACK_KEY='your-key-here'
 
 Get your free API key at [aviationstack.com](https://aviationstack.com/product)
 
-### 5. Start dump1090
+### 4. Start dump1090
 
 ```bash
 dump1090 --net --gain -10 --metric --write-json ./dump1090-fa-web/public_html/data &
@@ -203,20 +197,22 @@ Or for dump1090-fa:
 sudo systemctl start dump1090-fa
 ```
 
-### 6. Start the Flight Logger
+### 5. Start the Flight Logger
 
 ```bash
 python3 flight_logger_enhanced.py
 ```
 
-### 7. Start the Log API Server
+The database will be created automatically on first run.
+
+### 6. Start the Log API Server
 
 In a new terminal:
 ```bash
 python3 log_server.py
 ```
 
-### 8. View Your Tracking System
+### 7. View Your Tracking System
 
 Open your browser to:
 - **Live Map:** http://localhost:8080/ (includes signal heatmap overlay!)
@@ -224,7 +220,7 @@ Open your browser to:
 - **Flight Log:** http://localhost:8080/log.html
 - **Signal Monitor:** http://localhost:8080/signal-monitor.html (includes coverage analysis!)
 
-### 9. Enable Signal Heatmap (Optional)
+### 8. Enable Signal Heatmap (Optional)
 
 On the homepage, check the "🗺️ Signal Heatmap" box to see:
 - Signal strength distribution across your coverage area
@@ -262,38 +258,160 @@ This means your 100 free API calls can track 200-300 flights by skipping common 
 
 ## 📁 Project Structure
 
+This repository contains **875 files** organized into the following structure:
+
+### 🎯 Core Flight Tracking (~50 custom files)
 ```
 adsb-flight-tracker/
-├── flight_logger_enhanced.py      # Main flight logger with route optimization
-├── route_optimizer.py              # Intelligent route API prioritization
-├── api_quota_manager.py            # API quota tracking and management
-├── log_server.py                   # REST API server for web interface
-├── signal_logger.py                # Historical signal quality logger
-├── signal_analytics.py             # Signal pattern analysis
-├── setup_database.py               # Database initialization
-├── setup_signal_logging.py         # Signal logging table setup
-├── normalize_manufacturers.py      # Data quality: manufacturer names
-├── remove_duplicates_simple.py     # Data quality: duplicate removal
-├── fix_corrupted_aircraft.py       # Data quality: fix OpenSky errors
-├── flight_log.db                   # SQLite database (auto-created)
-├── dump1090-fa-web/
-│   └── public_html/
-│       ├── index.html              # Live map interface
-│       ├── stats.html              # Interactive statistics
-│       ├── log.html                # Flight log with advanced filters
-│       ├── signal-monitor.html     # Signal quality monitor + coverage analysis
-│       ├── heatmap.js              # 3D signal heatmap visualization
-│       ├── coverage_viz.js         # 360° polar coverage chart
-│       ├── antenna_marker.js       # Antenna location marker
-│       ├── homepage_status.js      # System status integration
-│       ├── status_indicator.js     # Floating status panel
-│       └── data/                   # dump1090 JSON output
-├── docs/
-│   ├── ROUTE_SETUP_GUIDE.md        # API setup instructions
-│   ├── QUOTA_MANAGEMENT_GUIDE.md   # API quota management
-│   └── HARDWARE_GUIDE.md           # Detailed hardware recommendations
-└── README.md                       # This file
+├── flight_logger_enhanced.py      # Main flight logger with intelligent route detection
+├── flight_logger.py                # Legacy/simple flight logger (use enhanced version)
+├── flight_tracker.py               # Alternative tracker implementation
+├── position_tracker.py             # Aircraft position logging and tracking
+└── log_server.py                   # REST API server (port 8081) for web interface
 ```
+
+### 📡 Signal Analysis & Coverage
+```
+├── signal_logger.py                # Historical signal quality data collection
+├── signal_analytics.py             # Signal pattern analysis and statistics
+├── signal_diagnostics.py           # Signal troubleshooting and debugging
+├── signal_storage_analysis.py      # Database storage usage analysis
+├── analyze_coverage.py             # Coverage area analysis and visualization
+└── calculate_antenna_location.py   # Antenna position estimation from aircraft data
+```
+
+### 🔧 Data Quality & Maintenance
+```
+├── normalize_manufacturers.py      # Consolidate manufacturer name variants
+├── remove_duplicates_simple.py     # Remove duplicate flight entries
+├── remove_duplicates.py            # Advanced duplicate detection
+├── fix_corrupted_aircraft.py       # Fix OpenSky database corruption
+├── fix_bad_aircraft_data.py        # General data quality fixes
+└── fix_flair_aircraft.py           # Fix Flair Airlines specific data issues
+```
+
+### 💾 Database Management & Backfill
+```
+├── setup_signal_logging.py         # Signal logging table setup (flights table auto-created)
+├── backfill_aircraft_data.py       # Backfill missing aircraft information
+├── backfill_aircraft_types.py      # Backfill aircraft type/model data
+├── backfill_countries.py           # Backfill country data from registrations
+├── backfill_routes_once.py         # One-time route data backfill
+├── enhanced_opensky_backfill.py    # Enhanced OpenSky Network data import
+└── enrich_aircraft_data.py         # Add additional aircraft metadata
+```
+
+### 🛤️ Route & API Management
+```
+├── route_optimizer.py              # Intelligent route API call prioritization
+├── api_quota_manager.py            # API quota tracking and management
+├── fetch_routes.py                 # Manual route data fetching
+└── adsbexchange_routes.py          # ADS-B Exchange route integration
+```
+
+### 🧪 Testing & Diagnostics
+```
+├── test_callsign_conversion.py     # Test airline code conversions
+├── test_opensky_quick.py           # Test OpenSky Network API
+├── test_quota_integration.py       # Test quota management system
+├── test_route_api.py               # Test route API functionality
+└── test_route_capture.sh           # Shell script for route testing
+```
+
+### ⚙️ System Management Scripts
+```
+├── start_adsb_tracker.sh           # Master startup script for all services
+├── stop_adsb_tracker.sh            # Gracefully stop all services
+├── check_status.sh                 # Check status of all running services
+└── watchdog.sh                     # Auto-restart crashed services
+```
+
+### 🌐 Web Interface (dump1090-fa-web/) - ~825 files
+This is the FlightAware dump1090 web interface, customized with additional features:
+
+```
+dump1090-fa-web/
+├── public_html/                    # Web interface root (served on port 8080)
+│   ├── index.html                  # Live map with real-time aircraft tracking
+│   ├── stats.html                  # Interactive statistics dashboard
+│   ├── log.html                    # Advanced flight log with filters
+│   ├── signal-monitor.html         # Signal quality + coverage analysis
+│   ├── config.js                   # Map configuration
+│   ├── script.js                   # Main application logic
+│   ├── planeObject.js              # Aircraft object handling
+│   ├── formatter.js                # Data formatting utilities
+│   │
+│   ├── Custom Visualization Modules:
+│   ├── heatmap.js                  # 3D signal strength heatmap (5 altitude layers)
+│   ├── coverage_viz.js             # 360° polar coverage chart
+│   ├── antenna_marker.js           # Antenna location marker with range rings
+│   ├── homepage_status.js          # Real-time system status widget
+│   └── status_indicator.js         # Floating status panel
+│   │
+│   ├── flags-tiny/                 # Country flag icons
+│   ├── images/                     # Aircraft silhouettes and UI icons
+│   ├── geojson/                    # Geographical boundary data
+│   ├── ol3/                        # OpenLayers 3 mapping library
+│   ├── noUiSlider/                 # Altitude slider control
+│   ├── jquery/                     # jQuery library
+│   ├── style.css                   # Main stylesheet
+│   └── data/                       # dump1090 JSON output (gitignored)
+│
+├── C source code (~500 files)      # dump1090 decoder (FlightAware fork)
+│   ├── dump1090.c                  # Main ADS-B decoder
+│   ├── net_io.c                    # Network I/O handling
+│   ├── demod_2400.c                # 2.4 Msps demodulator
+│   ├── track.c                     # Aircraft tracking logic
+│   └── ...                         # Additional decoder components
+│
+└── Tools & Documentation
+    ├── README.md                   # dump1090 documentation
+    ├── README-json.md              # JSON output format spec
+    └── tools/                      # Database and utility tools
+```
+
+### 📚 Documentation Files
+```
+├── README.md                       # This file - comprehensive project guide
+├── README_GITHUB.md                # GitHub-specific readme
+├── ADS-B_Guide.md                  # ADS-B protocol technical guide
+├── HARDWARE_GUIDE.md               # Hardware selection and setup
+├── ROUTE_SETUP_GUIDE.md            # API configuration instructions
+├── QUOTA_MANAGEMENT_GUIDE.md       # API efficiency strategies
+├── COVERAGE_FEATURES.md            # Coverage analysis documentation
+├── CONTRIBUTING.md                 # Contribution guidelines
+├── LICENSE                         # MIT license
+├── .gitignore                      # Excludes databases, logs, personal data
+└── docs/                           # Additional documentation
+    ├── HARDWARE_GUIDE.md
+    ├── ROUTE_SETUP_GUIDE.md
+    └── QUOTA_MANAGEMENT_GUIDE.md
+```
+
+### 📊 Auto-Generated Data (gitignored)
+```
+├── flight_log.db                   # SQLite database (auto-created on first run)
+├── flight_log.db-shm               # Shared memory file (WAL mode)
+├── flight_log.db-wal               # Write-ahead log (WAL mode)
+├── .api_quota.json                 # API quota tracking state
+└── logs/                           # Service logs directory
+    ├── dump1090.log
+    ├── flight_logger.log
+    ├── log_server.log
+    ├── position_tracker.log
+    ├── signal_logger.log
+    └── web_server.log
+```
+
+### 🗂️ File Categories Summary
+
+- **Custom Python scripts:** ~40 files for flight tracking, signal analysis, and data management
+- **Custom shell scripts:** 4 system management scripts
+- **dump1090-fa-web:** ~825 files (FlightAware's web interface + customizations)
+- **Documentation:** 10+ markdown files
+- **Auto-generated:** Database, logs, and runtime data (excluded from git)
+
+**Total repository size:** 875 tracked files (personal data excluded via .gitignore)
 
 ---
 
