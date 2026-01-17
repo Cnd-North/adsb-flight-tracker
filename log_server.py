@@ -72,6 +72,7 @@ class LogAPIHandler(BaseHTTPRequestHandler):
                     operator_iata,
                     squawk,
                     emergency,
+                    emergency_type,
                     vertical_rate,
                     latitude,
                     longitude,
@@ -185,7 +186,7 @@ class LogAPIHandler(BaseHTTPRequestHandler):
 
             # Emergency events
             cursor.execute('''
-                SELECT icao, callsign, squawk, first_seen, manufacturer, aircraft_model
+                SELECT icao, callsign, squawk, emergency_type, first_seen, manufacturer, aircraft_model
                 FROM flights
                 WHERE emergency = 1
                 ORDER BY first_seen DESC

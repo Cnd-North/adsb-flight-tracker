@@ -206,6 +206,39 @@ def normalize_manufacturer(manufacturer):
     # Return as-is if no mapping found
     return manufacturer
 
+# Emergency squawk codes mapping
+EMERGENCY_SQUAWKS = {
+    '7500': 'hijacking',
+    '7600': 'radio_failure',
+    '7700': 'general_emergency'
+}
+
+def detect_emergency(aircraft):
+    """
+    Detect emergency status and type from aircraft data.
+    Returns (is_emergency, emergency_type)
+
+    Emergency can be indicated by:
+    1. dump1090's emergency field (ADS-B emergency/priority status)
+    2. Special squawk codes (7500, 7600, 7700)
+    """
+    squawk = aircraft.get('squawk')
+    has_emergency_field = bool(aircraft.get('emergency'))
+
+    # Check if squawk code indicates emergency
+    emergency_type = None
+    if squawk in EMERGENCY_SQUAWKS:
+        emergency_type = EMERGENCY_SQUAWKS[squawk]
+        is_emergency = True
+    elif has_emergency_field:
+        # Emergency field is set but no special squawk - generic emergency
+        emergency_type = 'adsb_emergency'
+        is_emergency = True
+    else:
+        is_emergency = False
+
+    return is_emergency, emergency_type
+
 def get_aircraft_details(icao):
     """Get aircraft details from OpenSky Network"""
     if icao in aircraft_cache:
@@ -401,7 +434,8 @@ def log_flight(aircraft):
 
     # Extract additional dump1090 data
     squawk = aircraft.get('squawk')
-    emergency = 1 if aircraft.get('emergency') else 0
+    is_emergency, emergency_type = detect_emergency(aircraft)
+    emergency = 1 if is_emergency else 0
     vertical_rate = aircraft.get('vert_rate')
     latitude = aircraft.get('lat')
     longitude = aircraft.get('lon')
@@ -409,7 +443,13 @@ def log_flight(aircraft):
 
     print(f"\n📝 New flight detected: {callsign or icao}")
     if emergency:
-        print(f"  ⚠️  EMERGENCY SQUAWK: {squawk}")
+        emergency_desc = {
+            'hijacking': 'AIRCRAFT HIJACKING',
+            'radio_failure': 'RADIO FAILURE',
+            'general_emergency': 'GENERAL EMERGENCY',
+            'adsb_emergency': 'ADS-B EMERGENCY'
+        }.get(emergency_type, 'EMERGENCY')
+        print(f"  🚨 {emergency_desc}: Squawk {squawk}")
 
     # Get aircraft details
     aircraft_details = get_aircraft_details(icao)
@@ -461,8 +501,8 @@ def log_flight(aircraft):
             (icao, callsign, origin_country, altitude_max, speed_max, messages_total,
              registration, aircraft_type, aircraft_model, manufacturer, year_built,
              origin_airport, destination_airport, operator, operator_callsign, operator_iata,
-             squawk, emergency, vertical_rate, latitude, longitude, signal_rssi)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             squawk, emergency, emergency_type, vertical_rate, latitude, longitude, signal_rssi)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             icao,
             callsign,  # Already converted to empty string above
@@ -482,6 +522,7 @@ def log_flight(aircraft):
             aircraft_details.get('operator_iata') if aircraft_details else None,
             squawk,
             emergency,
+            emergency_type,
             vertical_rate,
             latitude,
             longitude,
@@ -555,7 +596,8 @@ def update_flight(aircraft):
 
     # Extract additional data
     squawk = aircraft.get('squawk')
-    emergency = 1 if aircraft.get('emergency') else 0
+    is_emergency, emergency_type = detect_emergency(aircraft)
+    emergency = 1 if is_emergency else 0
     vertical_rate = aircraft.get('vert_rate')
     latitude = aircraft.get('lat')
     longitude = aircraft.get('lon')
@@ -569,6 +611,7 @@ def update_flight(aircraft):
             messages_total = messages_total + ?,
             squawk = COALESCE(?, squawk),
             emergency = MAX(emergency, ?),
+            emergency_type = COALESCE(?, emergency_type),
             vertical_rate = ?,
             latitude = ?,
             longitude = ?,
@@ -581,6 +624,7 @@ def update_flight(aircraft):
         aircraft.get('messages', 0),
         squawk,
         emergency,
+        emergency_type,
         vertical_rate,
         latitude,
         longitude,
