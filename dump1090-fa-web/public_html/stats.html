@@ -437,15 +437,39 @@
                     <h2>⚠️ Emergency Events</h2>
             `;
             if (data.emergencies.length > 0) {
-                html += '<ul class="stat-list">';
-                data.emergencies.forEach(item => {
+                // Show total count (clickable)
+                html += `
+                    <div style="text-align: center; padding: 15px; background: #fff3cd; border-radius: 8px; margin-bottom: 15px; cursor: pointer;" onclick="toggleAllEmergencies()">
+                        <div style="font-size: 2.5em; font-weight: bold; color: #ff4444;">${data.emergencies.length}</div>
+                        <div style="color: #666; font-size: 0.9em;">Total Emergencies Detected</div>
+                        <div style="font-size: 0.75em; color: #999; margin-top: 5px;">Click to show all</div>
+                    </div>
+                `;
+
+                // Get emergency type description
+                const getEmergencyTypeDesc = (type) => {
+                    const types = {
+                        'hijacking': '🔴 Aircraft Hijacking',
+                        'radio_failure': '📡 Radio Failure',
+                        'general_emergency': '⚠️ General Emergency',
+                        'adsb_emergency': '🚨 ADS-B Emergency'
+                    };
+                    return types[type] || '⚠️ Emergency';
+                };
+
+                // Show 5 most recent
+                html += '<div style="margin-bottom: 10px; color: #666; font-size: 0.9em; font-weight: bold;">Most Recent (5):</div>';
+                html += '<ul class="stat-list" id="recent-emergencies">';
+                data.emergencies.slice(0, 5).forEach(item => {
                     const date = new Date(item.first_seen).toLocaleString();
                     const aircraft = item.manufacturer && item.aircraft_model ?
                         `${item.manufacturer} ${item.aircraft_model}` : 'Unknown';
+                    const emergencyType = getEmergencyTypeDesc(item.emergency_type);
                     html += `
                         <li>
-                            <div>
-                                <div><strong>${item.callsign || item.icao}</strong> <span class="emergency-badge">${item.squawk}</span></div>
+                            <div style="width: 100%;">
+                                <div><strong>${item.callsign || item.icao}</strong> <span class="emergency-badge">${item.squawk || 'N/A'}</span></div>
+                                <div style="font-size: 0.85em; color: #ff4444; font-weight: bold;">${emergencyType}</div>
                                 <div style="font-size: 0.85em; color: #666;">${aircraft}</div>
                                 <div style="font-size: 0.8em; color: #999;">${date}</div>
                             </div>
@@ -453,6 +477,34 @@
                     `;
                 });
                 html += '</ul>';
+
+                // Hidden section for all emergencies
+                if (data.emergencies.length > 5) {
+                    html += `
+                        <div id="all-emergencies" style="display: none;">
+                            <div style="margin-top: 20px; margin-bottom: 10px; padding-top: 15px; border-top: 2px solid #eee; color: #666; font-size: 0.9em; font-weight: bold;">
+                                All Emergencies (${data.emergencies.length}):
+                            </div>
+                            <ul class="stat-list">
+                    `;
+                    data.emergencies.forEach(item => {
+                        const date = new Date(item.first_seen).toLocaleString();
+                        const aircraft = item.manufacturer && item.aircraft_model ?
+                            `${item.manufacturer} ${item.aircraft_model}` : 'Unknown';
+                        const emergencyType = getEmergencyTypeDesc(item.emergency_type);
+                        html += `
+                            <li>
+                                <div style="width: 100%;">
+                                    <div><strong>${item.callsign || item.icao}</strong> <span class="emergency-badge">${item.squawk || 'N/A'}</span></div>
+                                    <div style="font-size: 0.85em; color: #ff4444; font-weight: bold;">${emergencyType}</div>
+                                    <div style="font-size: 0.85em; color: #666;">${aircraft}</div>
+                                    <div style="font-size: 0.8em; color: #999;">${date}</div>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    html += '</ul></div>';
+                }
             } else {
                 html += '<div class="no-data" style="padding: 20px;">No emergencies recorded</div>';
             }
@@ -906,6 +958,23 @@
             });
 
             showModal(`💎 All ${rareFlights.length} Rare Aircraft (Seen Once)`, rareFlights);
+        }
+
+        function toggleAllEmergencies() {
+            const allEmergenciesDiv = document.getElementById('all-emergencies');
+            if (!allEmergenciesDiv) {
+                return; // No hidden emergencies to show
+            }
+
+            const isHidden = allEmergenciesDiv.style.display === 'none';
+            allEmergenciesDiv.style.display = isHidden ? 'block' : 'none';
+
+            // Update the clickable count text
+            const clickableDiv = event.currentTarget;
+            const hintText = clickableDiv.querySelector('div:last-child');
+            if (hintText) {
+                hintText.textContent = isHidden ? 'Click to hide' : 'Click to show all';
+            }
         }
 
         // Close modal when clicking outside
