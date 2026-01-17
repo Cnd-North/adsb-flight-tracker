@@ -24,6 +24,12 @@ cleanup_for_github.sh
 secrets.txt
 api_keys.txt
 
+# Deployment scripts with credentials
+deploy_to_pi.sh
+deploy_to_pi.exp
+*_deploy.sh
+*_deploy.exp
+
 # Coverage reports
 htmlcov/
 .coverage
