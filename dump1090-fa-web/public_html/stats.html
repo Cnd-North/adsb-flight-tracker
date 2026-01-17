@@ -126,6 +126,36 @@
             font-size: 0.85em;
         }
 
+        .flight-link {
+            color: #667eea;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .flight-link:hover {
+            background: rgba(102, 126, 234, 0.2);
+            text-decoration: underline;
+        }
+
+        .icao-link {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .icao-link:hover {
+            background: rgba(102, 126, 234, 0.2);
+            text-decoration: underline;
+        }
+
         .chart-container {
             background: rgba(255,255,255,0.95);
             padding: 20px;
@@ -465,10 +495,17 @@
                     const aircraft = item.manufacturer && item.aircraft_model ?
                         `${item.manufacturer} ${item.aircraft_model}` : 'Unknown';
                     const emergencyType = getEmergencyTypeDesc(item.emergency_type);
+                    const icaoLower = (item.icao || '').toLowerCase();
+                    const displayText = item.callsign || item.icao;
                     html += `
                         <li>
                             <div style="width: 100%;">
-                                <div><strong>${item.callsign || item.icao}</strong> <span class="emergency-badge">${item.squawk || 'N/A'}</span></div>
+                                <div>
+                                    <a href="https://globe.adsbexchange.com/?icao=${icaoLower}" target="_blank" class="flight-link" title="View ${displayText} on ADS-B Exchange">
+                                        <strong>${displayText}</strong>
+                                    </a>
+                                    <span class="emergency-badge">${item.squawk || 'N/A'}</span>
+                                </div>
                                 <div style="font-size: 0.85em; color: #ff4444; font-weight: bold;">${emergencyType}</div>
                                 <div style="font-size: 0.85em; color: #666;">${aircraft}</div>
                                 <div style="font-size: 0.8em; color: #999;">${date}</div>
@@ -492,10 +529,17 @@
                         const aircraft = item.manufacturer && item.aircraft_model ?
                             `${item.manufacturer} ${item.aircraft_model}` : 'Unknown';
                         const emergencyType = getEmergencyTypeDesc(item.emergency_type);
+                        const icaoLower = (item.icao || '').toLowerCase();
+                        const displayText = item.callsign || item.icao;
                         html += `
                             <li>
                                 <div style="width: 100%;">
-                                    <div><strong>${item.callsign || item.icao}</strong> <span class="emergency-badge">${item.squawk || 'N/A'}</span></div>
+                                    <div>
+                                        <a href="https://globe.adsbexchange.com/?icao=${icaoLower}" target="_blank" class="flight-link" title="View ${displayText} on ADS-B Exchange">
+                                            <strong>${displayText}</strong>
+                                        </a>
+                                        <span class="emergency-badge">${item.squawk || 'N/A'}</span>
+                                    </div>
                                     <div style="font-size: 0.85em; color: #ff4444; font-weight: bold;">${emergencyType}</div>
                                     <div style="font-size: 0.85em; color: #666;">${aircraft}</div>
                                     <div style="font-size: 0.8em; color: #999;">${date}</div>
@@ -512,46 +556,34 @@
 
             html += '</div>';
 
-            // Top Models Chart
+            // Top Models
             html += `
-                <div class="chart-container">
+                <div class="stat-card">
                     <h2>📐 Most Common Aircraft Models</h2>
-                    <div class="bar-chart">
+                    <ul class="stat-list">
             `;
-            const maxModelCount = data.top_models[0]?.count || 1;
             data.top_models.slice(0, 10).forEach(item => {
-                const percentage = (item.count / maxModelCount) * 100;
                 const label = `${item.manufacturer || ''} ${item.aircraft_model || 'Unknown'}`.trim();
-                html += `
-                    <div class="bar-item clickable" onclick="showFlightsByModel('${escapeHtml(item.aircraft_model || 'Unknown')}', '${escapeHtml(item.manufacturer || '')}')">
-                        <div class="bar-label">${label}</div>
-                        <div class="bar-container">
-                            <div class="bar-fill" style="width: ${percentage}%">${item.count}</div>
-                        </div>
-                    </div>
-                `;
+                html += `<li class="clickable" onclick="showFlightsByModel('${escapeHtml(item.aircraft_model || 'Unknown')}', '${escapeHtml(item.manufacturer || '')}')">
+                    <span>${label}</span>
+                    <span class="count-badge">${item.count}</span>
+                </li>`;
             });
-            html += '</div></div>';
+            html += '</ul></div>';
 
-            // Countries Chart
+            // Aircraft by Country
             html += `
-                <div class="chart-container">
+                <div class="stat-card">
                     <h2>🌍 Aircraft by Country</h2>
-                    <div class="bar-chart">
+                    <ul class="stat-list">
             `;
-            const maxCountryCount = data.countries[0]?.count || 1;
             data.countries.slice(0, 15).forEach(item => {
-                const percentage = (item.count / maxCountryCount) * 100;
-                html += `
-                    <div class="bar-item clickable" onclick="showFlightsByCountry('${escapeHtml(item.origin_country || 'Unknown')}')">
-                        <div class="bar-label">${item.origin_country || 'Unknown'}</div>
-                        <div class="bar-container">
-                            <div class="bar-fill" style="width: ${percentage}%">${item.count}</div>
-                        </div>
-                    </div>
-                `;
+                html += `<li class="clickable" onclick="showFlightsByCountry('${escapeHtml(item.origin_country || 'Unknown')}')">
+                    <span>${item.origin_country || 'Unknown'}</span>
+                    <span class="count-badge">${item.count}</span>
+                </li>`;
             });
-            html += '</div></div>';
+            html += '</ul></div>';
 
             // Flights by Hour
             html += `
@@ -580,73 +612,57 @@
             // Route Statistics
             if (data.top_origins.length > 0 || data.top_destinations.length > 0) {
                 html += `
-                    <div class="chart-container">
+                    <div class="stat-card">
                         <h2>🛫 Top Origin Airports</h2>
-                        <div class="bar-chart">
                 `;
                 if (data.top_origins.length > 0) {
-                    const maxOriginCount = data.top_origins[0]?.count || 1;
+                    html += '<ul class="stat-list">';
                     data.top_origins.forEach(item => {
-                        const percentage = (item.count / maxOriginCount) * 100;
-                        html += `
-                            <div class="bar-item clickable" onclick="showFlightsByOrigin('${escapeHtml(item.origin_airport)}')">
-                                <div class="bar-label">${item.origin_airport}</div>
-                                <div class="bar-container">
-                                    <div class="bar-fill" style="width: ${percentage}%">${item.count}</div>
-                                </div>
-                            </div>
-                        `;
+                        html += `<li class="clickable" onclick="showFlightsByOrigin('${escapeHtml(item.origin_airport)}')">
+                            <span>${item.origin_airport}</span>
+                            <span class="count-badge">${item.count}</span>
+                        </li>`;
                     });
+                    html += '</ul>';
                 } else {
-                    html += '<div class="no-data">No origin data yet - routes will appear as flights are tracked</div>';
+                    html += '<div class="no-data" style="padding: 20px;">No origin data yet - routes will appear as flights are tracked</div>';
                 }
-                html += '</div></div>';
+                html += '</div>';
 
                 html += `
-                    <div class="chart-container">
+                    <div class="stat-card">
                         <h2>🛬 Top Destination Airports</h2>
-                        <div class="bar-chart">
                 `;
                 if (data.top_destinations.length > 0) {
-                    const maxDestCount = data.top_destinations[0]?.count || 1;
+                    html += '<ul class="stat-list">';
                     data.top_destinations.forEach(item => {
-                        const percentage = (item.count / maxDestCount) * 100;
-                        html += `
-                            <div class="bar-item clickable" onclick="showFlightsByDestination('${escapeHtml(item.destination_airport)}')">
-                                <div class="bar-label">${item.destination_airport}</div>
-                                <div class="bar-container">
-                                    <div class="bar-fill" style="width: ${percentage}%">${item.count}</div>
-                                </div>
-                            </div>
-                        `;
+                        html += `<li class="clickable" onclick="showFlightsByDestination('${escapeHtml(item.destination_airport)}')">
+                            <span>${item.destination_airport}</span>
+                            <span class="count-badge">${item.count}</span>
+                        </li>`;
                     });
+                    html += '</ul>';
                 } else {
-                    html += '<div class="no-data">No destination data yet - routes will appear as flights are tracked</div>';
+                    html += '<div class="no-data" style="padding: 20px;">No destination data yet - routes will appear as flights are tracked</div>';
                 }
-                html += '</div></div>';
+                html += '</div>';
             }
 
             // Most Common Routes
             if (data.top_routes.length > 0) {
                 html += `
-                    <div class="chart-container">
+                    <div class="stat-card">
                         <h2>🗺️ Most Common Routes</h2>
-                        <div class="bar-chart">
+                        <ul class="stat-list">
                 `;
-                const maxRouteCount = data.top_routes[0]?.count || 1;
                 data.top_routes.forEach(item => {
-                    const percentage = (item.count / maxRouteCount) * 100;
                     const routeLabel = `${item.origin_airport} → ${item.destination_airport}`;
-                    html += `
-                        <div class="bar-item clickable" onclick="showFlightsByRoute('${escapeHtml(item.origin_airport)}', '${escapeHtml(item.destination_airport)}')">
-                            <div class="bar-label">${routeLabel}</div>
-                            <div class="bar-container">
-                                <div class="bar-fill" style="width: ${percentage}%">${item.count}</div>
-                            </div>
-                        </div>
-                    `;
+                    html += `<li class="clickable" onclick="showFlightsByRoute('${escapeHtml(item.origin_airport)}', '${escapeHtml(item.destination_airport)}')">
+                        <span>${routeLabel}</span>
+                        <span class="count-badge">${item.count}</span>
+                    </li>`;
                 });
-                html += '</div></div>';
+                html += '</ul></div>';
             }
 
             // Records Section
@@ -789,11 +805,17 @@
                         squawkDisplay = `<span style="background: #ff0000; color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold;">${squawkDisplay}</span>`;
                     }
 
+                    // Make ICAO and Callsign clickable
+                    const icaoLink = `<a href="https://globe.adsbexchange.com/?icao=${icao.toLowerCase()}" target="_blank" class="icao-link" title="View ${icao} on ADS-B Exchange">${icao}</a>`;
+                    const callsignLink = callsign !== 'N/A' ?
+                        `<a href="https://globe.adsbexchange.com/?icao=${icao.toLowerCase()}" target="_blank" class="flight-link" title="View ${callsign} on ADS-B Exchange">${callsign}</a>` :
+                        callsign;
+
                     tableHtml += `
                         <tr>
                             <td>${firstSeen}</td>
-                            <td style="font-family: monospace; font-weight: bold; color: #667eea;">${icao}</td>
-                            <td style="font-weight: 600;">${callsign}</td>
+                            <td style="font-family: monospace; font-weight: bold;">${icaoLink}</td>
+                            <td style="font-weight: 600;">${callsignLink}</td>
                             <td>${registration}</td>
                             <td style="font-size: 0.85em;">${aircraft}</td>
                             <td style="font-size: 0.85em;">${operator}</td>
