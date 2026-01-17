@@ -151,9 +151,9 @@ class LogAPIHandler(BaseHTTPRequestHandler):
             cursor.execute('SELECT COUNT(DISTINCT icao) FROM flights')
             unique_aircraft = cursor.fetchone()[0]
 
-            # Top manufacturers
+            # Top manufacturers (count unique aircraft, not flights)
             cursor.execute('''
-                SELECT manufacturer, COUNT(*) as count
+                SELECT manufacturer, COUNT(DISTINCT icao) as count
                 FROM flights
                 WHERE manufacturer IS NOT NULL
                 GROUP BY manufacturer
@@ -162,9 +162,9 @@ class LogAPIHandler(BaseHTTPRequestHandler):
             ''')
             top_manufacturers = [dict(row) for row in cursor.fetchall()]
 
-            # Top models
+            # Top models (count unique aircraft, not flights)
             cursor.execute('''
-                SELECT aircraft_model, manufacturer, COUNT(*) as count
+                SELECT aircraft_model, manufacturer, COUNT(DISTINCT icao) as count
                 FROM flights
                 WHERE aircraft_model IS NOT NULL
                 GROUP BY aircraft_model, manufacturer
@@ -193,9 +193,9 @@ class LogAPIHandler(BaseHTTPRequestHandler):
             ''')
             emergencies = [dict(row) for row in cursor.fetchall()]
 
-            # Countries seen
+            # Countries seen (count unique aircraft, not flights)
             cursor.execute('''
-                SELECT origin_country, COUNT(*) as count
+                SELECT origin_country, COUNT(DISTINCT icao) as count
                 FROM flights
                 WHERE origin_country IS NOT NULL
                 GROUP BY origin_country
