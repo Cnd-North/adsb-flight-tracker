@@ -151,7 +151,8 @@ function processReceiverUpdate(data, receiver_source) {
                                 plane.tr.cells[0].textContent = hex.substring(1);
                                 $(plane.tr).css('font-style', 'italic');
                         } else {
-                                plane.tr.cells[0].textContent = hex;
+                                // Make ICAO clickable with ADS-B Exchange link
+                                plane.tr.cells[0].innerHTML = '<a href="https://globe.adsbexchange.com/?icao=' + hex.toLowerCase() + '" target="_blank" style="color: inherit; text-decoration: none;" title="View ' + hex.toUpperCase() + ' on ADS-B Exchange">' + hex + '</a>';
                         }
 
                         // set flag image if available
@@ -1731,11 +1732,12 @@ function refreshTableInfo() {
 
                         // ICAO doesn't change
                         if (tableplane.flight) {
-                                tableplane.tr.cells[2].innerHTML = getFlightAwareModeSLink(tableplane.icao, tableplane.flight, tableplane.flight);
+                                // Make flight callsign clickable with ADS-B Exchange link
+                                tableplane.tr.cells[2].innerHTML = '<a href="https://globe.adsbexchange.com/?icao=' + tableplane.icao.toLowerCase() + '" target="_blank" style="color: inherit; text-decoration: none;" title="View ' + tableplane.flight.trim() + ' on ADS-B Exchange">' + tableplane.flight + '</a>';
 				tableplane.tr.cells[2].className = "ident_normal";
                         } else if (tableplane.registration !== null) {
-                                // Show registration with special styling if ident is not present
-				tableplane.tr.cells[2].innerHTML = getFlightAwareIdentLink(tableplane.registration, tableplane.registration);
+                                // Show registration with special styling if ident is not present - also make clickable
+                                tableplane.tr.cells[2].innerHTML = '<a href="https://globe.adsbexchange.com/?icao=' + tableplane.icao.toLowerCase() + '" target="_blank" style="color: inherit; text-decoration: none;" title="View ' + tableplane.registration + ' on ADS-B Exchange">' + tableplane.registration + '</a>';
 				tableplane.tr.cells[2].className = "ident_fallback";
                         } else {
 				tableplane.tr.cells[2].innerHTML = "";

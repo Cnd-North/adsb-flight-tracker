@@ -320,6 +320,34 @@ div#loader {
     text-transform: uppercase;
 }
 
+.icaoCodeColumn a {
+    color: inherit;
+    text-decoration: none;
+    padding: 2px 4px;
+    border-radius: 3px;
+    display: inline-block;
+    transition: background-color 0.2s;
+}
+
+.icaoCodeColumn a:hover {
+    background-color: rgba(102, 126, 234, 0.2);
+    text-decoration: underline;
+}
+
+.plane_table_row td:nth-child(3) a {
+    color: inherit;
+    text-decoration: none;
+    padding: 2px 4px;
+    border-radius: 3px;
+    display: inline-block;
+    transition: background-color 0.2s;
+}
+
+.plane_table_row td:nth-child(3) a:hover {
+    background-color: rgba(102, 126, 234, 0.2);
+    text-decoration: underline;
+}
+
 .vPosition {
     background-color: #e5f6fc;
 }

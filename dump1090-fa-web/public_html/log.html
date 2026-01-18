@@ -281,6 +281,38 @@
             margin: 2px;
             font-size: 0.85em;
         }
+
+        .flight-link {
+            color: #2c3e50;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        .flight-link:hover {
+            background: rgba(102, 126, 234, 0.2);
+            color: #667eea;
+            text-decoration: underline;
+        }
+
+        .icao-link {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #667eea;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+
+        .icao-link:hover {
+            background: rgba(102, 126, 234, 0.2);
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
@@ -841,10 +873,16 @@
                     squawkDisplay = `<span style="background: #ff0000; color: white; padding: 2px 5px; border-radius: 3px; font-weight: bold;">${squawkDisplay}</span>`;
                 }
 
+                // Make ICAO and Callsign clickable
+                const icaoLink = `<a href="https://globe.adsbexchange.com/?icao=${icao.toLowerCase()}" target="_blank" class="icao-link" title="View ${icao} on ADS-B Exchange">${icao}</a>`;
+                const callsignLink = callsign !== 'N/A' ?
+                    `<a href="https://globe.adsbexchange.com/?icao=${icao.toLowerCase()}" target="_blank" class="flight-link" title="View ${callsign} on ADS-B Exchange">${callsign}</a>` :
+                    callsign;
+
                 row.innerHTML = `
                     <td class="time">${firstSeen}</td>
-                    <td class="icao">${icao}</td>
-                    <td class="callsign">${callsign}</td>
+                    <td>${icaoLink}</td>
+                    <td>${callsignLink}</td>
                     <td>${registration}</td>
                     <td style="font-size: 0.85em;">${aircraft}</td>
                     <td style="font-size: 0.85em;">${operator}</td>
