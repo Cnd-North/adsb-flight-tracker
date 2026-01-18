@@ -80,7 +80,6 @@ class LogAPIHandler(BaseHTTPRequestHandler):
                     signal_rssi
                 FROM flights
                 ORDER BY first_seen DESC
-                LIMIT 1000
             ''')
 
             flights = [dict(row) for row in cursor.fetchall()]
