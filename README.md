@@ -16,6 +16,10 @@ A comprehensive, professional-grade ADS-B aircraft tracking system with intellig
 - 🗺️ **Interactive web map** with altitude-based aircraft coloring
 - 📍 **Automatic route detection** (origin → destination airports)
 - 🌍 **Country detection** from aircraft registrations
+- 🚨 **Accurate emergency detection** - Only uses reliable transponder squawk codes (7500/7600/7700)
+  - Ignores unreliable ADS-B emergency field (prevents false positives)
+  - Categorizes emergency types: hijacking, radio failure, general emergency
+  - Zero false alarms from ground testing or non-emergency statuses
 
 ### Intelligent Route API Optimizer 🎯
 - **Makes your 100 free API calls go 3-5x further!**
@@ -32,14 +36,18 @@ A comprehensive, professional-grade ADS-B aircraft tracking system with intellig
 
 ### Web Interface
 - 📈 **Interactive statistics dashboard**
-  - Click manufacturers to see their aircraft
-  - Click aircraft models to see flight details
+  - Uniform list-based design across all sections
+  - Click manufacturers, models, countries, airports, and routes to see detailed flights
+  - Counts show unique aircraft (not duplicate flights)
+  - Emergency events with expandable list (shows 5 most recent, click to see all)
+  - Click any flight callsign/ICAO to view on ADS-B Exchange
   - Rare aircraft gallery
   - Real-time system status monitoring
 - 🗺️ **Live map with altitude-based colors**
   - Red (low) → Orange → Green → Blue → Purple (high altitude)
   - Flight tracks with altitude visualization
   - Country flags and detailed aircraft info
+  - Click aircraft to view on ADS-B Exchange
 - 📡 **Signal quality monitor**
   - Real-time waterfall display (1090 MHz spectrum)
   - Signal strength graphs with dB scale legend
@@ -49,6 +57,7 @@ A comprehensive, professional-grade ADS-B aircraft tracking system with intellig
   - Date ranges, time of day, text search
   - Altitude, speed, vertical speed ranges
   - Squawk code filtering
+  - Click any flight to view on ADS-B Exchange
   - CSV export
 
 ### Signal Analytics
@@ -293,12 +302,15 @@ adsb-flight-tracker/
 ### 💾 Database Management & Backfill
 ```
 ├── setup_signal_logging.py         # Signal logging table setup (flights table auto-created)
-├── backfill_aircraft_data.py       # Backfill missing aircraft information
-├── backfill_aircraft_types.py      # Backfill aircraft type/model data
-├── backfill_countries.py           # Backfill country data from registrations
-├── backfill_routes_once.py         # One-time route data backfill
-├── enhanced_opensky_backfill.py    # Enhanced OpenSky Network data import
-└── enrich_aircraft_data.py         # Add additional aircraft metadata
+├── add_emergency_type.py            # Database migration to add emergency_type column
+├── fix_false_emergencies.py         # Remove false emergency records (legacy cleanup)
+├── cleanup_adsb_emergencies.py      # Remove unreliable ADS-B emergency field records
+├── backfill_aircraft_data.py        # Backfill missing aircraft information
+├── backfill_aircraft_types.py       # Backfill aircraft type/model data
+├── backfill_countries.py            # Backfill country data from registrations
+├── backfill_routes_once.py          # One-time route data backfill
+├── enhanced_opensky_backfill.py     # Enhanced OpenSky Network data import
+└── enrich_aircraft_data.py          # Add additional aircraft metadata
 ```
 
 ### 🛤️ Route & API Management
@@ -470,6 +482,39 @@ python3 normalize_manufacturers.py    # Fix manufacturer name variants
 python3 remove_duplicates_simple.py   # Remove duplicate entries
 python3 fix_corrupted_aircraft.py     # Fix OpenSky database corruption
 ```
+
+### Emergency Detection
+
+**This tracker uses ONLY transponder squawk codes for emergency detection:**
+- **7500** = Aircraft Hijacking / Unlawful Interference
+- **7600** = Radio Failure / Loss of Communication
+- **7700** = General Emergency / Requiring Immediate Assistance
+
+**Why we ignore the ADS-B emergency field:**
+
+The ADS-B emergency field is unreliable and causes false positives. Testing showed regular commercial flights (Air Canada, WestJet, FedEx, United) being incorrectly flagged as emergencies with normal squawk codes.
+
+**Technical reasons:**
+1. Many aircraft don't properly implement ADS-B emergency status (Type 28 message)
+2. Field is set during ground testing and maintenance
+3. Triggered by non-emergency statuses (low fuel warnings, medical flights, priority statuses)
+4. Cannot distinguish emergency types
+
+**Squawk codes are the gold standard:**
+- Deliberately set by pilots
+- Recognized worldwide by ATC
+- No false positives
+- Clear, specific meaning
+
+If you see emergency records with normal squawk codes in an older database, run:
+```bash
+python3 cleanup_adsb_emergencies.py --fix
+```
+
+Sources:
+- [IFATCA Emergency Code Report](https://ifatca.wiki/kb/wp-2008-89/)
+- [ADS-B Exchange API Documentation](https://www.adsbexchange.com/version-2-api-wip/)
+- [FAA ATC Manual](https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap5_section_2.html)
 
 ---
 
