@@ -305,6 +305,69 @@ def categorize_aircraft(icao, registration, operator, operator_callsign, callsig
 
     return 'Unknown'
 
+# Military base ICAO codes for tracking military operations
+MILITARY_BASES = {
+    # Canadian Forces Bases
+    'CYTR': ('CFB Trenton', 'Canada'), 'CYQQ': ('CFB Comox', 'Canada'),
+    'CYOD': ('CFB Cold Lake', 'Canada'), 'CYWG': ('CFB Winnipeg', 'Canada'),
+    'CYAW': ('CFB Shearwater', 'Canada'), 'CYQF': ('CFB Bagotville', 'Canada'),
+    'CYQY': ('CFB Goose Bay', 'Canada'), 'CYHZ': ('CFB Halifax/Shearwater', 'Canada'),
+    # US Air Force Bases
+    'KSUU': ('Travis AFB', 'USA'), 'KEDW': ('Edwards AFB', 'USA'),
+    'KLSV': ('Nellis AFB', 'USA'), 'KDOV': ('Dover AFB', 'USA'),
+    'KOFF': ('Offutt AFB', 'USA'), 'KMCF': ('MacDill AFB', 'USA'),
+    'KDMA': ('Davis-Monthan AFB', 'USA'), 'KLUF': ('Luke AFB', 'USA'),
+    'KBAD': ('Barksdale AFB', 'USA'), 'KTIK': ('Tinker AFB', 'USA'),
+    'KRCA': ('Ellsworth AFB', 'USA'), 'KFFO': ('Wright-Patterson AFB', 'USA'),
+    'KRIV': ('March ARB', 'USA'), 'KBLV': ('Scott AFB', 'USA'),
+    'KDYS': ('Dyess AFB', 'USA'), 'KBAB': ('Beale AFB', 'USA'),
+    'KHIF': ('Hill AFB', 'USA'), 'KSPS': ('Sheppard AFB', 'USA'),
+    'KVPS': ('Eglin AFB', 'USA'), 'KMUO': ('Mountain Home AFB', 'USA'),
+    'KLFI': ('Langley AFB', 'USA'), 'KGRF': ('Gray AAF', 'USA'),
+    # US Naval Air Stations
+    'KNHK': ('NAS Patuxent River', 'USA'), 'KNSE': ('NAS Whiting Field', 'USA'),
+    'KNIP': ('NAS Jacksonville', 'USA'), 'KNPA': ('NAS Pensacola', 'USA'),
+    'KNOW': ('NAS Key West', 'USA'), 'KNZY': ('NAS North Island', 'USA'),
+    'KNFL': ('NAS Fallon', 'USA'), 'KNUW': ('NAS Whidbey Island', 'USA'),
+    'KNGU': ('NAS Norfolk', 'USA'), 'KNKT': ('NAS Cherry Point', 'USA'),
+    'KNLC': ('NAS Lemoore', 'USA'), 'KNTU': ('NAS Oceana', 'USA'),
+    # US Army/Marine Airfields
+    'KHOP': ('Fort Campbell AAF', 'USA'), 'KFRI': ('Fort Riley AAF', 'USA'),
+    'KFBG': ('Fort Bragg AAF', 'USA'), 'KNKX': ('MCAS Miramar', 'USA'),
+    'KNYL': ('MCAS Yuma', 'USA'), 'KADW': ('Andrews AFB', 'USA'),
+}
+
+def detect_military_base_operation(origin_airport, destination_airport):
+    """
+    Detect if flight is operating at a military base.
+    Returns (is_military_op, base_name)
+    """
+    if not origin_airport and not destination_airport:
+        return False, None
+
+    base_name = None
+
+    # Check origin
+    if origin_airport and origin_airport in MILITARY_BASES:
+        base_info = MILITARY_BASES[origin_airport]
+        base_name = f"{base_info[0]} ({origin_airport})"
+
+    # Check destination
+    if destination_airport and destination_airport in MILITARY_BASES:
+        base_info = MILITARY_BASES[destination_airport]
+        dest_base = f"{base_info[0]} ({destination_airport})"
+
+        if base_name:
+            # Both origin and dest are military bases
+            base_name = f"{base_name} → {dest_base}"
+        else:
+            base_name = dest_base
+
+    if base_name:
+        return True, base_name
+
+    return False, None
+
 # Emergency squawk codes mapping
 # These are the ONLY reliable indicators of actual emergencies
 EMERGENCY_SQUAWKS = {
@@ -633,6 +696,12 @@ def log_flight(aircraft):
         aircraft_details.get('type') if aircraft_details else None
     )
 
+    # Detect military base operations
+    is_military_op, military_base_name = detect_military_base_operation(
+        route_info.get('origin') if route_info else None,
+        route_info.get('destination') if route_info else None
+    )
+
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
@@ -642,8 +711,9 @@ def log_flight(aircraft):
             (icao, callsign, origin_country, altitude_max, speed_max, messages_total,
              registration, aircraft_type, aircraft_model, manufacturer, year_built,
              origin_airport, destination_airport, operator, operator_callsign, operator_iata,
-             squawk, emergency, emergency_type, vertical_rate, latitude, longitude, signal_rssi, category)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             squawk, emergency, emergency_type, vertical_rate, latitude, longitude, signal_rssi,
+             category, military_base_activity, military_base_name)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             icao,
             callsign,  # Already converted to empty string above
@@ -668,7 +738,9 @@ def log_flight(aircraft):
             latitude,
             longitude,
             rssi,
-            category
+            category,
+            1 if is_military_op else 0,
+            military_base_name
         ))
 
         conn.commit()
@@ -690,6 +762,9 @@ def log_flight(aircraft):
                 origin = route_info.get('origin') or '?'
                 dest = route_info.get('destination') or '?'
                 print(f"  🛫 Route: {origin} → {dest}")
+
+            if is_military_op:
+                print(f"  🎖️  MILITARY BASE OPERATION: {military_base_name}")
 
     except sqlite3.IntegrityError:
         pass

@@ -78,7 +78,9 @@ class LogAPIHandler(BaseHTTPRequestHandler):
                     longitude,
                     time_in_view,
                     signal_rssi,
-                    category
+                    category,
+                    military_base_activity,
+                    military_base_name
                 FROM flights
                 ORDER BY first_seen DESC
             ''')
@@ -287,6 +289,17 @@ class LogAPIHandler(BaseHTTPRequestHandler):
             ''')
             categories = [dict(row) for row in cursor.fetchall()]
 
+            # Military base operations
+            cursor.execute('''
+                SELECT icao, callsign, origin_airport, destination_airport,
+                       military_base_name, first_seen, manufacturer, aircraft_model,
+                       category, registration
+                FROM flights
+                WHERE military_base_activity = 1
+                ORDER BY first_seen DESC
+            ''')
+            military_base_ops = [dict(row) for row in cursor.fetchall()]
+
             conn.close()
 
             analytics = {
@@ -303,7 +316,8 @@ class LogAPIHandler(BaseHTTPRequestHandler):
                 'top_origins': top_origins,
                 'top_destinations': top_destinations,
                 'top_routes': top_routes,
-                'categories': categories
+                'categories': categories,
+                'military_base_ops': military_base_ops
             }
 
             self.send_response(200)

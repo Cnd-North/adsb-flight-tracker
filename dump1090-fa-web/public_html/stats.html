@@ -669,6 +669,106 @@
             }
             html += '</div>';
 
+            // Military Base Operations
+            html += `
+                <div class="stat-card">
+                    <h2>🎖️ Military Base Operations</h2>
+            `;
+            if (data.military_base_ops && data.military_base_ops.length > 0) {
+                // Show total count (clickable)
+                html += `
+                    <div style="text-align: center; padding: 15px; background: #e8f5e9; border-radius: 8px; margin-bottom: 15px; cursor: pointer;" onclick="toggleAllMilitaryOps()">
+                        <div style="font-size: 2.5em; font-weight: bold; color: #2e7d32;">${data.military_base_ops.length}</div>
+                        <div style="color: #666; font-size: 0.9em;">Total Military Base Operations</div>
+                        <div style="font-size: 0.75em; color: #999; margin-top: 5px;">Click to show all</div>
+                    </div>
+                `;
+
+                // Show 5 most recent
+                html += '<div style="margin-bottom: 10px; color: #666; font-size: 0.9em; font-weight: bold;">Most Recent (5):</div>';
+                html += '<ul class="stat-list" id="recent-military-ops">';
+                data.military_base_ops.slice(0, 5).forEach(item => {
+                    const date = new Date(item.first_seen).toLocaleString();
+                    const aircraft = item.manufacturer && item.aircraft_model ?
+                        `${item.manufacturer} ${item.aircraft_model}` : 'Unknown';
+                    const icaoLower = (item.icao || '').toLowerCase();
+                    const displayText = item.callsign || item.icao;
+                    const categoryIcon = {
+                        'Military': '⚔️',
+                        'Government': '🏛️',
+                        'Commercial': '✈️',
+                        'Private': '🛩️',
+                        'Special': '🚁',
+                        'General Aviation': '🛫',
+                        'Unknown': '❓'
+                    }[item.category] || '✈️';
+
+                    html += `
+                        <li>
+                            <div style="width: 100%;">
+                                <div>
+                                    <a href="https://globe.adsbexchange.com/?icao=${icaoLower}" target="_blank" class="flight-link" title="View ${displayText} on ADS-B Exchange">
+                                        <strong>${displayText}</strong>
+                                    </a>
+                                    <span style="font-size: 0.8em; color: #666;"> ${categoryIcon} ${item.category || 'Unknown'}</span>
+                                </div>
+                                <div style="font-size: 0.85em; color: #2e7d32; font-weight: bold;">🎖️ ${item.military_base_name}</div>
+                                <div style="font-size: 0.85em; color: #666;">${aircraft}</div>
+                                <div style="font-size: 0.8em; color: #999;">${date}</div>
+                            </div>
+                        </li>
+                    `;
+                });
+                html += '</ul>';
+
+                // Hidden section for all military operations
+                if (data.military_base_ops.length > 5) {
+                    html += `
+                        <div id="all-military-ops" style="display: none;">
+                            <div style="margin-top: 20px; margin-bottom: 10px; padding-top: 15px; border-top: 2px solid #eee; color: #666; font-size: 0.9em; font-weight: bold;">
+                                All Military Base Operations (${data.military_base_ops.length}):
+                            </div>
+                            <ul class="stat-list">
+                    `;
+                    data.military_base_ops.forEach(item => {
+                        const date = new Date(item.first_seen).toLocaleString();
+                        const aircraft = item.manufacturer && item.aircraft_model ?
+                            `${item.manufacturer} ${item.aircraft_model}` : 'Unknown';
+                        const icaoLower = (item.icao || '').toLowerCase();
+                        const displayText = item.callsign || item.icao;
+                        const categoryIcon = {
+                            'Military': '⚔️',
+                            'Government': '🏛️',
+                            'Commercial': '✈️',
+                            'Private': '🛩️',
+                            'Special': '🚁',
+                            'General Aviation': '🛫',
+                            'Unknown': '❓'
+                        }[item.category] || '✈️';
+
+                        html += `
+                            <li>
+                                <div style="width: 100%;">
+                                    <div>
+                                        <a href="https://globe.adsbexchange.com/?icao=${icaoLower}" target="_blank" class="flight-link" title="View ${displayText} on ADS-B Exchange">
+                                            <strong>${displayText}</strong>
+                                        </a>
+                                        <span style="font-size: 0.8em; color: #666;"> ${categoryIcon} ${item.category || 'Unknown'}</span>
+                                    </div>
+                                    <div style="font-size: 0.85em; color: #2e7d32; font-weight: bold;">🎖️ ${item.military_base_name}</div>
+                                    <div style="font-size: 0.85em; color: #666;">${aircraft}</div>
+                                    <div style="font-size: 0.8em; color: #999;">${date}</div>
+                                </div>
+                            </li>
+                        `;
+                    });
+                    html += '</ul></div>';
+                }
+            } else {
+                html += '<div class="no-data" style="padding: 20px;">No military base operations detected</div>';
+            }
+            html += '</div>';
+
             html += '</div>';
 
             // Top Models and Countries (side by side)
@@ -1137,6 +1237,23 @@
 
             const isHidden = allEmergenciesDiv.style.display === 'none';
             allEmergenciesDiv.style.display = isHidden ? 'block' : 'none';
+
+            // Update the clickable count text
+            const clickableDiv = event.currentTarget;
+            const hintText = clickableDiv.querySelector('div:last-child');
+            if (hintText) {
+                hintText.textContent = isHidden ? 'Click to hide' : 'Click to show all';
+            }
+        }
+
+        function toggleAllMilitaryOps() {
+            const allMilitaryOpsDiv = document.getElementById('all-military-ops');
+            if (!allMilitaryOpsDiv) {
+                return; // No hidden military ops to show
+            }
+
+            const isHidden = allMilitaryOpsDiv.style.display === 'none';
+            allMilitaryOpsDiv.style.display = isHidden ? 'block' : 'none';
 
             // Update the clickable count text
             const clickableDiv = event.currentTarget;
