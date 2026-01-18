@@ -207,34 +207,66 @@ def normalize_manufacturer(manufacturer):
     return manufacturer
 
 # Emergency squawk codes mapping
+# These are the ONLY reliable indicators of actual emergencies
 EMERGENCY_SQUAWKS = {
-    '7500': 'hijacking',
-    '7600': 'radio_failure',
-    '7700': 'general_emergency'
+    '7500': 'hijacking',       # Aircraft hijacking / unlawful interference
+    '7600': 'radio_failure',   # Loss of radio communication
+    '7700': 'general_emergency' # General emergency requiring immediate assistance
 }
 
 def detect_emergency(aircraft):
     """
-    Detect emergency status and type from aircraft data.
+    Detect emergency status from aircraft transponder squawk codes.
     Returns (is_emergency, emergency_type)
 
-    Emergency can be indicated by:
-    1. dump1090's emergency field (ADS-B emergency/priority status)
-    2. Special squawk codes (7500, 7600, 7700)
+    IMPORTANT: We ONLY use transponder squawk codes (7500/7600/7700) for emergency detection.
+
+    WHY WE IGNORE THE ADS-B EMERGENCY FIELD:
+    ========================================
+    The ADS-B emergency field (aircraft.get('emergency')) is UNRELIABLE and causes false positives:
+
+    1. IMPLEMENTATION ISSUES:
+       - Many aircraft do not properly implement the ADS-B emergency status message (Type 28)
+       - Manufacturers chose not to implement the full emergency register despite it being in the standard
+       - The field indicates "there is an emergency but not what type" (Source: IFATCA)
+
+    2. FALSE POSITIVES:
+       - Set during ground testing and maintenance
+       - Triggered by low fuel warnings (minfuel) - not emergencies
+       - Activated for medical flights (lifeguard) - priority but not emergency
+       - Radio failure (nordo) - already covered by squawk 7600
+       - Many other non-emergency priority statuses
+
+    3. FIELD DEFINITION:
+       According to ADS-B Exchange API documentation, the emergency field is a "superset of the
+       7×00 squawks" and can indicate: general, lifeguard, minfuel, nordo, unlawful, downed, reserved
+       MOST OF THESE ARE NOT ACTUAL EMERGENCIES!
+
+    4. REAL-WORLD EVIDENCE:
+       Testing showed regular commercial flights (Air Canada, WestJet) being flagged as emergencies
+       with normal squawk codes like 2653, 3247, 4533 - clearly false positives.
+
+    THE GOLD STANDARD - TRANSPONDER SQUAWK CODES:
+    ============================================
+    - Pilots deliberately set these codes
+    - Recognized worldwide by ATC
+    - No false positives
+    - Clear, specific meaning
+    - Industry standard since inception of transponders
+
+    Sources:
+    - IFATCA Report: https://ifatca.wiki/kb/wp-2008-89/
+    - ADS-B Exchange API: https://www.adsbexchange.com/version-2-api-wip/
+    - FAA ATC Manual: https://www.faa.gov/air_traffic/publications/atpubs/atc_html/chap5_section_2.html
     """
     squawk = aircraft.get('squawk')
-    has_emergency_field = bool(aircraft.get('emergency'))
 
-    # Check if squawk code indicates emergency
-    emergency_type = None
+    # ONLY check squawk codes - ignore ADS-B emergency field
     if squawk in EMERGENCY_SQUAWKS:
         emergency_type = EMERGENCY_SQUAWKS[squawk]
         is_emergency = True
-    elif has_emergency_field:
-        # Emergency field is set but no special squawk - generic emergency
-        emergency_type = 'adsb_emergency'
-        is_emergency = True
     else:
+        emergency_type = None
         is_emergency = False
 
     return is_emergency, emergency_type
