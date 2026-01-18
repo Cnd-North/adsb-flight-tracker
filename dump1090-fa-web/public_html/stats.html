@@ -638,6 +638,37 @@
             }
             html += '</div>';
 
+            // Aircraft Categories
+            html += `
+                <div class="stat-card">
+                    <h2>🏷️ Aircraft by Category</h2>
+            `;
+            if (data.categories && data.categories.length > 0) {
+                // Define category icons
+                const categoryIcons = {
+                    'Military': '⚔️',
+                    'Government': '🏛️',
+                    'Commercial': '✈️',
+                    'Private': '🛩️',
+                    'Special': '🚁',
+                    'General Aviation': '🛫',
+                    'Unknown': '❓'
+                };
+
+                html += '<ul class="stat-list">';
+                data.categories.forEach(item => {
+                    const icon = categoryIcons[item.category] || '✈️';
+                    html += `<li class="clickable" onclick="showFlightsByCategory('${escapeHtml(item.category || 'Unknown')}')">
+                        <span>${icon} ${item.category || 'Unknown'}</span>
+                        <span class="count-badge">${item.count}</span>
+                    </li>`;
+                });
+                html += '</ul>';
+            } else {
+                html += '<div class="no-data" style="padding: 20px;">No category data yet</div>';
+            }
+            html += '</div>';
+
             html += '</div>';
 
             // Top Models and Countries (side by side)
@@ -965,6 +996,26 @@
                 (f.origin_country || 'Unknown') === country
             );
             showModal(`🌍 ${country} Aircraft (${filtered.length} flights)`, filtered);
+        }
+
+        function showFlightsByCategory(category) {
+            const filtered = allFlights.filter(f =>
+                (f.category || 'Unknown') === category
+            );
+
+            // Icon mapping for category display
+            const categoryIcons = {
+                'Military': '⚔️',
+                'Government': '🏛️',
+                'Commercial': '✈️',
+                'Private': '🛩️',
+                'Special': '🚁',
+                'General Aviation': '🛫',
+                'Unknown': '❓'
+            };
+
+            const icon = categoryIcons[category] || '✈️';
+            showModal(`${icon} ${category} Aircraft (${filtered.length} flights)`, filtered);
         }
 
         function showFlightsByHour(hour) {

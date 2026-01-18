@@ -77,7 +77,8 @@ class LogAPIHandler(BaseHTTPRequestHandler):
                     latitude,
                     longitude,
                     time_in_view,
-                    signal_rssi
+                    signal_rssi,
+                    category
                 FROM flights
                 ORDER BY first_seen DESC
             ''')
@@ -276,6 +277,16 @@ class LogAPIHandler(BaseHTTPRequestHandler):
             ''')
             top_routes = [dict(row) for row in cursor.fetchall()]
 
+            # Aircraft by category (count unique aircraft, not flights)
+            cursor.execute('''
+                SELECT category, COUNT(DISTINCT icao) as count
+                FROM flights
+                WHERE category IS NOT NULL
+                GROUP BY category
+                ORDER BY count DESC
+            ''')
+            categories = [dict(row) for row in cursor.fetchall()]
+
             conn.close()
 
             analytics = {
@@ -291,7 +302,8 @@ class LogAPIHandler(BaseHTTPRequestHandler):
                 'rare_aircraft': rare_aircraft,
                 'top_origins': top_origins,
                 'top_destinations': top_destinations,
-                'top_routes': top_routes
+                'top_routes': top_routes,
+                'categories': categories
             }
 
             self.send_response(200)

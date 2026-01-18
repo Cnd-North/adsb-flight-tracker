@@ -206,6 +206,105 @@ def normalize_manufacturer(manufacturer):
     # Return as-is if no mapping found
     return manufacturer
 
+def categorize_aircraft(icao, registration, operator, operator_callsign, callsign, aircraft_type):
+    """
+    Categorize an aircraft based on available information.
+
+    Returns one of: Military, Government, Private, Commercial, Special, General Aviation, Unknown
+    """
+    icao = (icao or '').upper()
+    registration = (registration or '').upper()
+    operator = (operator or '').upper()
+    operator_callsign = (operator_callsign or '').upper()
+    callsign = (callsign or '').upper()
+    aircraft_type = (aircraft_type or '').upper()
+
+    # Military indicators
+    military_keywords = ['FORCE', 'NAVY', 'ARMY', 'AIR FORCE', 'MARINES', 'MILITARY', 'DEFENSE']
+    military_callsigns = ['CNV', 'CFC', 'CANFORCE']  # Canadian Forces
+
+    # US Military ICAO hex ranges (approximate)
+    us_military_ranges = [
+        (0xADF7C8, 0xAFFFFF),  # US Air Force
+        (0xAE0000, 0xAE7FFF),  # US Navy
+        (0xAE8000, 0xAEFFFF),  # US Army
+        (0xAC0000, 0xAC7FFF),  # USAF additional
+    ]
+
+    # Check for military
+    if any(keyword in operator for keyword in military_keywords):
+        return 'Military'
+    if any(keyword in operator_callsign for keyword in military_keywords):
+        return 'Military'
+    if any(cs in callsign for cs in military_callsigns):
+        return 'Military'
+
+    # Check US military hex ranges
+    try:
+        icao_int = int(icao, 16) if icao else 0
+        for start, end in us_military_ranges:
+            if start <= icao_int <= end:
+                return 'Military'
+    except (ValueError, TypeError):
+        pass
+
+    # Government indicators
+    gov_keywords = ['POLICE', 'SHERIFF', 'COAST GUARD', 'CUSTOMS', 'BORDER', 'GOVERNMENT',
+                    'FBI', 'DEA', 'FORESTRY', 'PARKS', 'STATE PATROL']
+
+    if any(keyword in operator for keyword in gov_keywords):
+        return 'Government'
+    if any(keyword in operator_callsign for keyword in gov_keywords):
+        return 'Government'
+
+    # Special operations
+    special_keywords = ['AMBULANCE', 'MEDEVAC', 'LIFE FLIGHT', 'AIR AMBULANCE', 'MEDIC',
+                       'FIREFIGHTER', 'FIRE', 'RESCUE', 'SEARCH AND RESCUE', 'LIFEGUARD']
+
+    if any(keyword in operator for keyword in special_keywords):
+        return 'Special'
+    if any(keyword in callsign for keyword in special_keywords):
+        return 'Special'
+
+    # Commercial airlines (major indicators)
+    commercial_keywords = ['AIRLINES', 'AIRWAYS', 'AIR CANADA', 'WESTJET', 'UNITED', 'DELTA',
+                          'AMERICAN', 'SOUTHWEST', 'CARGO', 'EXPRESS', 'FEDEX', 'UPS']
+
+    if any(keyword in operator for keyword in commercial_keywords):
+        return 'Commercial'
+
+    # Commercial aircraft types
+    commercial_types = ['A320', 'A321', 'A319', 'A330', 'A350', 'B737', 'B738', 'B739',
+                       'B77W', 'B787', 'B788', 'B789', 'CRJ', 'E170', 'E175', 'E190',
+                       'B752', 'B763', 'B764', 'MD11', 'DC10']
+
+    if any(atype in aircraft_type for atype in commercial_types):
+        return 'Commercial'
+
+    # Private/Corporate
+    private_keywords = ['CORP', 'CORPORATION', 'LLC', 'INC', 'PRIVATE', 'EXECUTIVE',
+                       'AVIATION', 'JET', 'CHARTER']
+    private_types = ['C25', 'C50', 'C56', 'C68', 'C750', 'GLF', 'G280', 'G650',
+                    'CL60', 'FA7X', 'PC12', 'TBM']
+
+    if any(keyword in operator for keyword in private_keywords):
+        return 'Private'
+    if any(ptype in aircraft_type for ptype in private_types):
+        return 'Private'
+
+    # General Aviation (small aircraft)
+    ga_types = ['C172', 'C182', 'C206', 'PA28', 'PA44', 'SR20', 'SR22', 'DA40', 'DA42',
+                'BE36', 'BE58', 'P28A', 'C152', 'C150']
+
+    if any(gatype in aircraft_type for gatype in ga_types):
+        return 'General Aviation'
+
+    # If we have an operator but couldn't categorize, likely commercial or private
+    if operator and len(operator) > 3:
+        return 'Commercial'
+
+    return 'Unknown'
+
 # Emergency squawk codes mapping
 # These are the ONLY reliable indicators of actual emergencies
 EMERGENCY_SQUAWKS = {
@@ -524,6 +623,16 @@ def log_flight(aircraft):
     if not country:
         country = "Unknown"
 
+    # Categorize aircraft
+    category = categorize_aircraft(
+        icao,
+        aircraft_details.get('registration') if aircraft_details else None,
+        aircraft_details.get('operator') if aircraft_details else None,
+        aircraft_details.get('operator_callsign') if aircraft_details else None,
+        callsign,
+        aircraft_details.get('type') if aircraft_details else None
+    )
+
     conn = sqlite3.connect(DATABASE)
     cursor = conn.cursor()
 
@@ -533,8 +642,8 @@ def log_flight(aircraft):
             (icao, callsign, origin_country, altitude_max, speed_max, messages_total,
              registration, aircraft_type, aircraft_model, manufacturer, year_built,
              origin_airport, destination_airport, operator, operator_callsign, operator_iata,
-             squawk, emergency, emergency_type, vertical_rate, latitude, longitude, signal_rssi)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             squawk, emergency, emergency_type, vertical_rate, latitude, longitude, signal_rssi, category)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             icao,
             callsign,  # Already converted to empty string above
@@ -558,7 +667,8 @@ def log_flight(aircraft):
             vertical_rate,
             latitude,
             longitude,
-            rssi
+            rssi,
+            category
         ))
 
         conn.commit()
