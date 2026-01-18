@@ -206,9 +206,11 @@
             display: flex;
             flex-direction: row;
             align-items: flex-end;
-            gap: 8px;
-            height: 300px;
-            padding: 20px 10px 10px 10px;
+            justify-content: space-between;
+            gap: 4px;
+            height: 280px;
+            padding: 20px 10px 40px 10px;
+            position: relative;
         }
 
         .bar-item-vertical {
@@ -217,22 +219,13 @@
             align-items: center;
             justify-content: flex-end;
             flex: 1;
-            min-width: 0;
             cursor: pointer;
-        }
-
-        .bar-container-vertical {
-            width: 100%;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
             position: relative;
         }
 
         .bar-fill-vertical {
-            width: 80%;
+            width: 100%;
+            max-width: 40px;
             background: linear-gradient(to top, #667eea, #764ba2);
             border-radius: 5px 5px 0 0;
             transition: all 0.3s;
@@ -242,24 +235,28 @@
             color: white;
             font-weight: bold;
             font-size: 0.85em;
-            padding: 0;
-            min-height: 0;
+            padding-top: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
 
-        .bar-fill-vertical:not(:empty) {
-            padding-top: 5px;
+        .bar-fill-vertical:empty {
+            padding-top: 0;
         }
 
         .bar-item-vertical:hover .bar-fill-vertical {
             background: linear-gradient(to top, #7c8ef3, #8b5fc4);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
         }
 
         .bar-label-bottom {
-            font-size: 0.75em;
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.7em;
             color: #666;
-            margin-top: 5px;
             font-weight: 600;
             text-align: center;
+            white-space: nowrap;
         }
 
         .bar-item {
@@ -684,16 +681,17 @@
                     <div class="bar-chart-horizontal">
             `;
             const maxHourCount = Math.max(...data.flights_by_hour.map(h => h.count));
+            const maxBarHeight = 250; // Maximum bar height in pixels
             for (let i = 0; i < 24; i++) {
                 const hourData = data.flights_by_hour.find(h => h.hour === i);
                 const count = hourData?.count || 0;
-                const percentage = maxHourCount > 0 ? (count / maxHourCount) * 100 : 0;
+                // Calculate actual pixel height
+                const barHeight = maxHourCount > 0 ? Math.round((count / maxHourCount) * maxBarHeight) : 0;
                 const onclick = count > 0 ? `onclick="showFlightsByHour(${i})"` : '';
+                const cursorStyle = count > 0 ? 'cursor: pointer;' : 'cursor: default;';
                 html += `
-                    <div class="bar-item-vertical" ${onclick}>
-                        <div class="bar-container-vertical">
-                            <div class="bar-fill-vertical" style="height: ${percentage}%">${count || ''}</div>
-                        </div>
+                    <div class="bar-item-vertical" ${onclick} style="${cursorStyle}">
+                        <div class="bar-fill-vertical" style="height: ${barHeight}px;">${count || ''}</div>
                         <div class="bar-label-bottom">${i.toString().padStart(2, '0')}:00</div>
                     </div>
                 `;
